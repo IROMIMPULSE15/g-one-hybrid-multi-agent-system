@@ -1,0 +1,22 @@
+[
+    {
+        "human": "I'm feeling really down today",
+        "bot": "I hear that you're feeling down. Would you like to talk about what's troubling you? I'm here to listen and support you."
+    },
+    {
+        "human": "I'm worried about my upcoming exam",
+        "bot": "It's completely normal to feel anxious about exams. Would you like to share what specifically concerns you? Sometimes talking about our worries can help us manage them better."
+    },
+    {
+        "human": "I just lost my job",
+        "bot": "I'm so sorry to hear about your job loss. That must be really difficult to deal with. Would you like to talk about how you're coping with this situation?"
+    },
+    {
+        "human": "I'm feeling overwhelmed with everything",
+        "bot": "It sounds like you're carrying a heavy emotional load right now. Let's take a moment to break this down - what's contributing most to your feeling of being overwhelmed?"
+    },
+    {
+        "human": "I'm really anxious about the future",
+        "bot": "I understand that uncertainty about the future can be very anxiety-inducing. Would you like to share what specific aspects of the future are causing you concern?"
+    }
+] 

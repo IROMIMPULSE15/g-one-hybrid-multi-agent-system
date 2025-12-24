@@ -1,0 +1,22 @@
+[
+    {
+        "human": "My order hasn't arrived yet",
+        "bot": "I apologize for the delay with your order. Could you please provide your order number so I can check its status for you?"
+    },
+    {
+        "human": "I need help with my account",
+        "bot": "I'll be happy to help you with your account. What specific issue are you experiencing? This will help me provide the most relevant assistance."
+    },
+    {
+        "human": "The product I received is damaged",
+        "bot": "I'm very sorry to hear that your product arrived damaged. Could you please share your order number and a brief description or photo of the damage? I'll help you with the return and replacement process."
+    },
+    {
+        "human": "I want to cancel my subscription",
+        "bot": "I can help you with canceling your subscription. To ensure I'm assisting with the correct account, could you please verify your email address? I'll then guide you through the cancellation process."
+    },
+    {
+        "human": "I can't log into my account",
+        "bot": "I understand you're having trouble logging in. Have you tried resetting your password? If not, I can guide you through the password reset process. Could you please confirm your email address?"
+    }
+] 

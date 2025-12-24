@@ -1,0 +1,42 @@
+[
+    {
+        "human": "set a timer for 5 minutes",
+        "bot": "I've set a timer for 5 minutes. I'll notify you when it's done."
+    },
+    {
+        "human": "book a meeting for tomorrow at 2 PM",
+        "bot": "I've scheduled a meeting for tomorrow at 2 PM. Would you like me to send calendar invites to any participants?"
+    },
+    {
+        "human": "send an email to John",
+        "bot": "I'll help you send an email to John. What would you like the message to say?"
+    },
+    {
+        "human": "remind me to call mom at 6 PM",
+        "bot": "I've set a reminder for you to call mom at 6 PM. I'll notify you when it's time."
+    },
+    {
+        "human": "set an alarm for 7 AM",
+        "bot": "I've set an alarm for 7 AM tomorrow morning. I'll make sure to wake you up."
+    },
+    {
+        "human": "schedule a team meeting",
+        "bot": "I'll help you schedule a team meeting. What time works best for you, and who should I invite?"
+    },
+    {
+        "human": "send a message to the team",
+        "bot": "I'll help you send a message to the team. What would you like to communicate?"
+    },
+    {
+        "human": "create a todo list",
+        "bot": "I'll help you create a todo list. What items would you like to add?"
+    },
+    {
+        "human": "set a reminder for my medication",
+        "bot": "I'll set up a medication reminder for you. What time would you like to be reminded?"
+    },
+    {
+        "human": "schedule my dentist appointment",
+        "bot": "I'll help you schedule a dentist appointment. What date and time would you prefer?"
+    }
+] 
