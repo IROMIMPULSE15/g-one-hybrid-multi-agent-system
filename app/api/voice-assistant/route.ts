@@ -3,6 +3,7 @@ import { NextRequest } from "next/server"
 import { generateWithProvider, isProviderConfigured } from './llm_provider'
 import { generateEmbedding } from './embeddings'
 import { searchTrainedDataLegacy } from './json_search'
+import { searchMedical } from './medicalsearch'
 import type { Pinecone } from "@pinecone-database/pinecone"
 import axios from "axios"
 import crypto from "crypto"
@@ -191,8 +192,8 @@ const CONFIG = {
   MAX_MESSAGE_LENGTH: 1000,
   MAX_CONTEXT_HISTORY: 10,
   RAG_TOP_K: 8,
-  LLM_MAX_TOKENS: 800,
-  LLM_TEMPERATURE: 0.2,
+  LLM_MAX_TOKENS: 1500,  // Increased from 800 to allow comprehensive responses
+  LLM_TEMPERATURE: 0.7,   // Increased from 0.2 for more natural, conversational responses
   WEB_SEARCH_TIMEOUT: 8000,
   MEDICAL_API_TIMEOUT: 10000,
   MAX_RAG_RETRY_ATTEMPTS: 3
@@ -383,7 +384,9 @@ function setCachedResponse(cacheKey: string, response: ApiResponse): void {
 
   if (global.responseCache && global.responseCache.size > 100) {
     const firstKey = global.responseCache.keys().next().value
-    global.responseCache.delete(firstKey)
+    if (firstKey) {
+      global.responseCache.delete(firstKey)
+    }
   }
 }
 
@@ -424,7 +427,8 @@ async function addToKnowledgeBase(
   content: string,
   category: string,
   tags: string[] = [],
-  priority: 'low' | 'medium' | 'high' | 'critical' = 'medium'
+  priority: 'low' | 'medium' | 'high' | 'critical' = 'medium',
+  userId: string = 'anonymous'
 ): Promise<void> {
   try {
     const pine = await initializePinecone()
@@ -440,7 +444,7 @@ async function addToKnowledgeBase(
     }
 
     const embedding = await generateEmbedding(content)
-    const id = `knowledge_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    const id = `knowledge_${userId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const vectors = [{
       id,
       values: embedding,
@@ -449,17 +453,18 @@ async function addToKnowledgeBase(
         category,
         tags,
         priority,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        userId: userId
       }
     }]
 
     try {
       await idx.upsert({ vectors })
-      console.log(`✅ Added to knowledge base: ${id}`)
+      console.log(`✅ Added to knowledge base for user ${userId}: ${id}`)
     } catch (upsertErr) {
       try {
         await idx.upsert({ upsertRequest: { vectors } })
-        console.log(`✅ Added to knowledge base (legacy): ${id}`)
+        console.log(`✅ Added to knowledge base (legacy) for user ${userId}: ${id}`)
       } catch (err2) {
         console.warn('⚠️ Pinecone upsert failed:', (err2 as any)?.message)
       }
@@ -469,7 +474,11 @@ async function addToKnowledgeBase(
   }
 }
 
-async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K): Promise<RAGResult> {
+async function enhancedRAGSearch(
+  query: string,
+  limit: number = CONFIG.RAG_TOP_K,
+  userId: string = 'anonymous'
+): Promise<RAGResult> {
   const startTime = Date.now()
 
   try {
@@ -512,7 +521,10 @@ async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K
         results = await idx.query({
           vector: queryEmbedding,
           topK: currentLimit,
-          includeMetadata: true
+          includeMetadata: true,
+          filter: {
+            userId: { $eq: userId }
+          }
         })
         if (results?.matches && results.matches.length > 0) break
       } catch (errQuery) {
@@ -521,7 +533,10 @@ async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K
             queryRequest: {
               vector: queryEmbedding,
               topK: currentLimit,
-              includeMetadata: true
+              includeMetadata: true,
+              filter: {
+                userId: { $eq: userId }
+              }
             }
           })
           if (results?.matches && results.matches.length > 0) break
@@ -542,7 +557,7 @@ async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K
     }
 
     const matches = results?.matches || []
-    console.log(`📚 RAG search retrieved ${matches.length} results for: "${query}"`)
+    console.log(`📚 RAG search retrieved ${matches.length} results for user ${userId}: "${query}"`)
 
     const entries: KnowledgeEntry[] = matches
       .filter((match: any) => match && match.metadata && match.metadata.content)
@@ -563,7 +578,7 @@ async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K
     const totalRelevance = entries.reduce((sum, entry) => sum + (entry.relevanceScore || 0), 0)
     const categories = [...new Set(entries.map(entry => entry.category))]
 
-    console.log(`✅ RAG search completed: ${entries.length} entries, relevance: ${totalRelevance.toFixed(2)}`)
+    console.log(`✅ RAG search completed for user ${userId}: ${entries.length} entries, relevance: ${totalRelevance.toFixed(2)}`)
 
     return {
       entries,
@@ -584,6 +599,194 @@ async function enhancedRAGSearch(query: string, limit: number = CONFIG.RAG_TOP_K
   }
 }
 
+// ==================== CHAIN OF THOUGHT HELPERS ====================
+
+function extractEntities(message: string): string[] {
+  const entities: string[] = []
+  const lowerMessage = message.toLowerCase()
+
+  // Extract named entities (capitalized words)
+  const capitalizedWords = message.match(/\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)*\b/g) || []
+  entities.push(...capitalizedWords)
+
+  // Extract numbers and quantities
+  const numbers = message.match(/\b\d+(?:\.\d+)?(?:\s*(?:million|billion|thousand|hundred|percent|%))?\b/g) || []
+  entities.push(...numbers)
+
+  // Extract dates and times
+  const dates = message.match(/\b(?:today|tomorrow|yesterday|\d{4}|\d{1,2}\/\d{1,2}(?:\/\d{2,4})?)\b/gi) || []
+  entities.push(...dates)
+
+  // Extract technical terms
+  const techTerms = ['AI', 'ML', 'API', 'CPU', 'GPU', 'RAM', 'SSD', 'HDD', 'USB', 'HTTP', 'HTTPS', 'DNS', 'IP']
+  techTerms.forEach(term => {
+    if (new RegExp(`\\b${term}\\b`, 'i').test(message)) {
+      entities.push(term)
+    }
+  })
+
+  return [...new Set(entities)].slice(0, 10) // Limit to 10 unique entities
+}
+
+function analyzeQueryComplexity(message: string, intent: string): {
+  level: 'simple' | 'moderate' | 'complex' | 'expert'
+  requirements: string[]
+} {
+  const requirements: string[] = []
+  let complexityScore = 0
+
+  // Word count complexity
+  const wordCount = message.split(/\s+/).length
+  if (wordCount > 20) complexityScore += 2
+  else if (wordCount > 10) complexityScore += 1
+
+  // Technical terms
+  if (/\b(algorithm|quantum|neural|blockchain|cryptocurrency|machine learning|deep learning|API|database|server|cloud|encryption)\b/i.test(message)) {
+    complexityScore += 2
+    requirements.push('technical knowledge')
+  }
+
+  // Multi-part questions
+  if (/\band\b.*\?|\?.*\band\b/i.test(message) || message.split('?').length > 2) {
+    complexityScore += 2
+    requirements.push('multi-part answer')
+  }
+
+  // Comparison or analysis
+  if (/compare|versus|difference|better|worse|pros|cons|advantages|disadvantages/i.test(message)) {
+    complexityScore += 1
+    requirements.push('comparison analysis')
+  }
+
+  // Explanation or reasoning
+  if (/why|how|explain|describe|elaborate|detail/i.test(message)) {
+    complexityScore += 1
+    requirements.push('detailed explanation')
+  }
+
+  // Mathematical or computational
+  if (/calculate|compute|solve|equation|formula|algorithm/i.test(message)) {
+    complexityScore += 2
+    requirements.push('calculation')
+  }
+
+  // Determine level
+  let level: 'simple' | 'moderate' | 'complex' | 'expert' = 'simple'
+  if (complexityScore >= 6) level = 'expert'
+  else if (complexityScore >= 4) level = 'complex'
+  else if (complexityScore >= 2) level = 'moderate'
+
+  if (requirements.length === 0) requirements.push('basic response')
+
+  return { level, requirements }
+}
+
+function detectMultiHopReasoning(message: string, ragResults: RAGResult): {
+  required: boolean
+  depth: number
+  intermediateSteps: string[]
+} {
+  const intermediateSteps: string[] = []
+  let depth = 1
+
+  // Check for causal chains (A causes B causes C)
+  if (/because|therefore|thus|hence|consequently|as a result|leads to|causes/i.test(message)) {
+    depth++
+    intermediateSteps.push('causal inference')
+  }
+
+  // Check for conditional reasoning (if-then)
+  if (/if|then|when|unless|provided that|assuming/i.test(message)) {
+    depth++
+    intermediateSteps.push('conditional logic')
+  }
+
+  // Check for comparison requiring multiple lookups
+  if (/compare|versus|difference between/i.test(message)) {
+    depth++
+    intermediateSteps.push('multi-entity comparison')
+  }
+
+  // Check for temporal reasoning (before/after)
+  if (/before|after|first|then|next|finally|sequence|order/i.test(message)) {
+    depth++
+    intermediateSteps.push('temporal reasoning')
+  }
+
+  // Check for aggregation (combining multiple facts)
+  if (/all|every|total|sum|average|overall|combined/i.test(message)) {
+    depth++
+    intermediateSteps.push('aggregation')
+  }
+
+  // Check if RAG results span multiple categories (requires synthesis)
+  if (ragResults.categories.length > 2) {
+    depth++
+    intermediateSteps.push('cross-domain synthesis')
+  }
+
+  const required = depth > 1
+
+  return { required, depth, intermediateSteps }
+}
+
+function predictResponseQuality(
+  ragResults: RAGResult,
+  complexity: { level: string; requirements: string[] },
+  context: ConversationContext
+): {
+  score: number
+  confidence: number
+  gaps: string[]
+} {
+  let score = 5 // Base score
+  const gaps: string[] = []
+
+  // RAG quality contribution
+  const avgRelevance = ragResults.totalRelevance / Math.max(ragResults.entries.length, 1)
+  if (avgRelevance > 0.8) score += 2
+  else if (avgRelevance > 0.5) score += 1
+  else if (avgRelevance < 0.3) {
+    score -= 1
+    gaps.push('low knowledge relevance')
+  }
+
+  // Knowledge coverage
+  if (ragResults.entries.length === 0) {
+    score -= 2
+    gaps.push('no prior knowledge')
+  } else if (ragResults.entries.length < 3) {
+    score -= 1
+    gaps.push('limited knowledge')
+  } else if (ragResults.entries.length >= 5) {
+    score += 1
+  }
+
+  // Complexity match
+  if (complexity.level === 'expert' && ragResults.entries.length < 5) {
+    score -= 1
+    gaps.push('insufficient depth for expert query')
+  }
+
+  // Context continuity
+  if (context.conversationLength > 5 && context.topicContinuity.length > 0) {
+    score += 1 // Good conversation flow
+  }
+
+  // Ensure score is between 1-10
+  score = Math.max(1, Math.min(10, score))
+
+  // Calculate confidence based on available information
+  let confidence = 0.5
+  if (ragResults.entries.length > 0) confidence += 0.2
+  if (avgRelevance > 0.6) confidence += 0.2
+  if (gaps.length === 0) confidence += 0.1
+
+  confidence = Math.min(0.95, confidence)
+
+  return { score, confidence, gaps }
+}
+
 // ==================== CHAIN OF THOUGHT ====================
 
 function executeChainOfThought(
@@ -593,45 +796,107 @@ function executeChainOfThought(
 ): ChainOfThoughtProcess {
   const steps: ChainOfThoughtStep[] = []
 
+  // Step 1: Intent Analysis
+  const intent = analyzeIntent(userMessage)
   steps.push({
     step: 1,
     thought: "Analyzing user intent and identifying key components of the query",
     action: "parse_intent",
-    result: `Query: "${userMessage}" - Intent: ${analyzeIntent(userMessage)}`,
+    result: `Query: "${userMessage}" - Intent: ${intent}`,
     confidence: 0.8
   })
 
+  // Step 2: Entity Extraction
+  const entities = extractEntities(userMessage)
   steps.push({
     step: 2,
+    thought: "Extracting key entities, topics, and concepts from the query",
+    action: "extract_entities",
+    result: `Entities: ${entities.join(', ') || 'None'} | Topics: ${extractTopics(userMessage).join(', ')}`,
+    confidence: entities.length > 0 ? 0.85 : 0.6
+  })
+
+  // Step 3: Context Evaluation
+  steps.push({
+    step: 3,
     thought: "Evaluating conversation history, user preferences, and current context",
     action: "assess_context",
-    result: `User: ${context.userName || 'Anonymous'}, Mood: ${context.userMood}, History: ${context.conversationLength}`,
+    result: `User: ${context.userName || 'Anonymous'}, Mood: ${context.userMood}, History: ${context.conversationLength} messages, Recent topics: ${context.topicContinuity.slice(-3).join(', ') || 'None'}`,
     confidence: 0.9
   })
 
+  // Step 4: Knowledge Retrieval Analysis
+  const ragQuality = ragResults.totalRelevance / Math.max(ragResults.entries.length, 1)
   steps.push({
-    step: 3,
+    step: 4,
     thought: "Analyzing retrieved knowledge and determining relevance to user query",
     action: "analyze_rag",
-    result: `Found ${ragResults.entries.length} relevant entries with relevance score: ${ragResults.totalRelevance.toFixed(2)}`,
+    result: `Found ${ragResults.entries.length} relevant entries | Avg relevance: ${ragQuality.toFixed(2)} | Categories: ${ragResults.categories.join(', ') || 'None'}`,
     confidence: ragResults.totalRelevance > 5 ? 0.9 : 0.6
   })
 
-  const needsCurrentInfo = /current|latest|recent|today|now|news|update|2024|2025/i.test(userMessage)
+  // Step 5: Complexity Analysis
+  const complexity = analyzeQueryComplexity(userMessage, intent)
   steps.push({
-    step: 4,
-    thought: "Determining if current/real-time information is needed",
+    step: 5,
+    thought: "Determining query complexity and required reasoning depth",
+    action: "analyze_complexity",
+    result: `Complexity: ${complexity.level} | Requires: ${complexity.requirements.join(', ')}`,
+    confidence: 0.85
+  })
+
+  // Step 6: Information Needs Assessment
+  const needsCurrentInfo = /current|latest|recent|today|now|news|update|2024|2025/i.test(userMessage)
+  const needsCalculation = /calculate|compute|how many|how much|sum|total|average/i.test(userMessage)
+  const needsComparison = /compare|versus|vs|difference|better|worse/i.test(userMessage)
+
+  steps.push({
+    step: 6,
+    thought: "Determining specific information needs and data requirements",
     action: "check_info_needs",
-    result: `Needs current info: ${needsCurrentInfo}`,
+    result: `Current info: ${needsCurrentInfo} | Calculation: ${needsCalculation} | Comparison: ${needsComparison}`,
     confidence: 0.95
   })
 
+  // Step 7: Multi-hop Reasoning Detection
+  const requiresMultiHop = detectMultiHopReasoning(userMessage, ragResults)
   steps.push({
-    step: 5,
-    thought: "Formulating response strategy based on analysis",
+    step: 7,
+    thought: "Detecting if multi-hop reasoning or chain inference is required",
+    action: "detect_multihop",
+    result: `Multi-hop required: ${requiresMultiHop.required} | Reasoning chain depth: ${requiresMultiHop.depth} | Intermediate steps: ${requiresMultiHop.intermediateSteps.join(' → ')}`,
+    confidence: requiresMultiHop.required ? 0.75 : 0.9
+  })
+
+  // Step 8: Fact Verification Needs
+  const needsVerification = /is it true|fact check|verify|confirm|accurate/i.test(userMessage) ||
+    intent === 'information_seeking'
+  steps.push({
+    step: 8,
+    thought: "Assessing need for fact verification and source credibility",
+    action: "verify_facts",
+    result: `Verification needed: ${needsVerification} | RAG sources: ${ragResults.entries.length} | Web search: ${needsCurrentInfo}`,
+    confidence: 0.8
+  })
+
+  // Step 9: Response Strategy Planning
+  const strategy = determineResponseStrategy(userMessage, context, ragResults, needsCurrentInfo)
+  steps.push({
+    step: 9,
+    thought: "Formulating optimal response strategy based on comprehensive analysis",
     action: "plan_response",
-    result: determineResponseStrategy(userMessage, context, ragResults, needsCurrentInfo),
+    result: `Strategy: ${strategy} | Length: ${complexity.level} | Sources: ${needsCurrentInfo ? 'RAG + Web' : 'RAG only'}`,
     confidence: 0.85
+  })
+
+  // Step 10: Quality Prediction
+  const qualityPrediction = predictResponseQuality(ragResults, complexity, context)
+  steps.push({
+    step: 10,
+    thought: "Predicting response quality and identifying potential gaps",
+    action: "predict_quality",
+    result: `Expected quality: ${qualityPrediction.score}/10 | Confidence: ${qualityPrediction.confidence} | Gaps: ${qualityPrediction.gaps.join(', ') || 'None'}`,
+    confidence: qualityPrediction.confidence
   })
 
   const avgConfidence = steps.reduce((sum, step) => sum + step.confidence, 0) / steps.length
@@ -722,7 +987,8 @@ async function performEnhancedWebSearch(query: string, cotProcess: ChainOfThough
 
 async function callEnhancedLlamaWithCoTAndRAG(
   userMessage: string,
-  context: ConversationContext
+  context: ConversationContext,
+  userId: string = 'anonymous'
 ): Promise<{
   response: string
   reasoning: string
@@ -732,9 +998,9 @@ async function callEnhancedLlamaWithCoTAndRAG(
   confidence: number
   provider?: string
 }> {
-  console.log('🧠 Starting Enhanced LLM processing with CoT and RAG...')
+  console.log(`🧠 Starting Enhanced LLM processing with CoT and RAG for user ${userId}...`)
 
-  const ragResults = await enhancedRAGSearch(userMessage, CONFIG.RAG_TOP_K)
+  const ragResults = await enhancedRAGSearch(userMessage, CONFIG.RAG_TOP_K, userId)
   console.log(`📚 RAG found ${ragResults.entries.length} relevant entries`)
 
   const cotProcess = executeChainOfThought(userMessage, context, ragResults)
@@ -767,6 +1033,20 @@ async function callEnhancedLlamaWithCoTAndRAG(
 
   const cotSummary = `Reasoning: ${cotProcess.finalReasoning}`
 
+  // Determine appropriate response length based on query type
+  const queryType = analyzeIntent(userMessage)
+  let lengthGuideline = ''
+
+  if (['greeting', 'farewell', 'gratitude'].includes(queryType)) {
+    lengthGuideline = 'CRITICAL: Keep response to 1-2 sentences maximum. Be warm but brief.'
+  } else if (queryType === 'general_conversation' && userMessage.split(' ').length < 5) {
+    lengthGuideline = 'Keep response concise: 2-3 sentences maximum.'
+  } else if (['information_seeking', 'current_information', 'medical_query'].includes(queryType)) {
+    lengthGuideline = 'Provide detailed, comprehensive response (3-5 paragraphs if needed).'
+  } else {
+    lengthGuideline = 'Keep response moderate: 3-4 sentences, expanding only if complexity requires it.'
+  }
+
   const enhancedPrompt = `You are an advanced AI assistant using Chain of Thought reasoning and knowledge retrieval.
 
 USER CONTEXT:
@@ -785,11 +1065,14 @@ ${webSearchResults ? `CURRENT INFORMATION:\n${webSearchResults}\n` : ''}
 
 USER QUESTION: "${userMessage}"
 
+RESPONSE LENGTH REQUIREMENT:
+${lengthGuideline}
+
 INSTRUCTIONS:
 1. Provide a helpful, accurate, and conversational response
 2. If the knowledge above is relevant, reference and build upon it naturally
 3. Be engaging and personable - avoid robotic responses
-4. Keep response under 250 words unless complexity requires more
+4. STRICTLY follow the length requirement above - do not be overly verbose
 5. If information might be incomplete, acknowledge it honestly
 6. Match the user's expertise level and tone
 7. Use markdown formatting for better readability when appropriate
@@ -822,15 +1105,42 @@ Response:`
 
       text = text.trim()
 
-      if (text.length > 500) {
-        text = text.substring(0, 480) + '...'
+      // Smart length enforcement based on query type
+      const queryType = analyzeIntent(userMessage)
+      let maxLength = 0
+
+      if (['greeting', 'farewell', 'gratitude'].includes(queryType)) {
+        maxLength = 150  // ~1-2 sentences
+      } else if (queryType === 'general_conversation' && userMessage.split(' ').length < 5) {
+        maxLength = 300  // ~2-3 sentences
+      } else if (['information_seeking', 'current_information', 'medical_query'].includes(queryType)) {
+        maxLength = 2000  // Allow detailed responses
+      } else {
+        maxLength = 600  // ~3-4 sentences
+      }
+
+      // Only truncate if significantly over limit (allow some flexibility)
+      if (text.length > maxLength * 1.2) {
+        // Find last complete sentence within limit
+        const truncated = text.substring(0, maxLength)
+        const lastPeriod = truncated.lastIndexOf('.')
+        const lastQuestion = truncated.lastIndexOf('?')
+        const lastExclamation = truncated.lastIndexOf('!')
+        const lastSentenceEnd = Math.max(lastPeriod, lastQuestion, lastExclamation)
+
+        if (lastSentenceEnd > maxLength * 0.7) {
+          text = text.substring(0, lastSentenceEnd + 1).trim()
+        } else {
+          text = truncated.trim() + '...'
+        }
       }
 
       addToKnowledgeBase(
         `Q: ${userMessage}\nA: ${text}`,
         'conversation',
         ['user_interaction', context.userMood],
-        'medium'
+        'medium',
+        userId
       ).catch(err => console.warn('⚠️ Failed to update knowledge base:', err))
 
       if (webSearchResults) {
@@ -838,7 +1148,8 @@ Response:`
           webSearchResults,
           'current_info',
           ['web_search', 'current'],
-          'high'
+          'high',
+          userId
         ).catch(err => console.warn('⚠️ Failed to store web search results:', err))
       }
 
@@ -943,7 +1254,8 @@ Response:`
       `Q: ${userMessage}\nA: ${fallbackText}`,
       'conversation',
       ['fallback', 'provider_error'],
-      'low'
+      'low',
+      userId
     ).catch(err => console.warn('⚠️ Failed to record fallback interaction:', err))
 
     const usedSources = ['reasoning'] as string[]
@@ -1108,52 +1420,70 @@ function calculateImportance(message: string, sentimentAnalysis: any): number {
 
 async function handleMedicalQuery(message: string): Promise<{
   response: string
-  ragResults?: number
+  ragResults?: any
   cotSteps?: string[]
 }> {
+  console.log('🏥 Processing medical query with Llama 3...')
+
   try {
-    try {
-      const response = await axios.post("http://localhost:8000/medical-response", {
-        text: message
-      }, {
-        timeout: CONFIG.MEDICAL_API_TIMEOUT,
-        headers: { 'Content-Type': 'application/json' }
-      })
+    const medicalResponse = await searchMedical(message, {
+      model: 'llama3',
+      temperature: 0.3, // Low temperature for medical accuracy
+      includeRelated: true
+    })
 
-      return {
-        response: response.data.response,
-        ragResults: response.data.sources?.length || response.data.matches?.length || 0,
-        cotSteps: response.data.cot_steps || response.data.chain_of_thought || []
-      }
-    } catch (errPrimary) {
-      console.warn('⚠️ Medical agent /medical-response failed, trying /medical fallback')
+    // Format the response with disclaimer
+    const formattedResponse = `${medicalResponse.answer}\n\n${medicalResponse.disclaimer}`
 
-      try {
-        const resp2 = await axios.post("http://localhost:8000/medical", {
-          query: message
-        }, {
-          timeout: CONFIG.MEDICAL_API_TIMEOUT,
-          headers: { 'Content-Type': 'application/json' }
-        })
+    // Create CoT steps for medical reasoning
+    const cotSteps = [
+      'Classified query as medical',
+      `Confidence: ${(medicalResponse.confidence * 100).toFixed(0)}%`,
+      `Sources: ${medicalResponse.sources.join(', ')}`
+    ]
 
-        return {
-          response: resp2.data.response || resp2.data.message || JSON.stringify(resp2.data),
-          ragResults: resp2.data.sources?.length || resp2.data.matches?.length || 0,
-          cotSteps: resp2.data.cot_steps || resp2.data.chain_of_thought || []
-        }
-      } catch (errFallback) {
-        console.error('❌ Both medical endpoints failed')
-        const disclaimer = "⚠️ **Medical Disclaimer**: I'm an AI assistant, not a medical professional. This information is for educational purposes only and should not replace professional medical advice."
-        return {
-          response: `${disclaimer}\n\nI couldn't connect to the medical agent. Please consult a healthcare professional for personalized advice. For emergencies, call emergency services immediately.`
-        }
-      }
+    if (medicalResponse.relatedTopics && medicalResponse.relatedTopics.length > 0) {
+      cotSteps.push(`Related topics: ${medicalResponse.relatedTopics.join(', ')}`)
+    }
+
+    console.log(`✅ Medical query processed with ${medicalResponse.confidence.toFixed(2)} confidence`)
+
+    return {
+      response: formattedResponse,
+      ragResults: {
+        entries: medicalResponse.sources.map((source, idx) => ({
+          id: `medical_${idx}`,
+          content: source,
+          category: 'medical',
+          timestamp: new Date(),
+          tags: ['medical', 'llama3'],
+          priority: 'high' as const,
+          relevanceScore: medicalResponse.confidence,
+          accessCount: 0,
+          lastAccessed: new Date()
+        })),
+        totalRelevance: medicalResponse.confidence,
+        categories: ['medical'],
+        searchQuery: message,
+        processingTime: 0
+      },
+      cotSteps
     }
   } catch (error) {
-    console.error('❌ Medical agent error:', error)
+    console.error('❌ Medical query processing failed:', error)
+
+    // Fallback response
     const disclaimer = "⚠️ **Medical Disclaimer**: I'm an AI assistant, not a medical professional. This information is for educational purposes only and should not replace professional medical advice."
     return {
-      response: `${disclaimer}\n\nI couldn't connect to the medical agent. Please consult a healthcare professional for personalized advice. For emergencies, call emergency services immediately.`
+      response: `${disclaimer}\n\nI encountered an error processing your medical query. Please consult a healthcare professional for personalized advice. For emergencies, call emergency services immediately.`,
+      ragResults: {
+        entries: [],
+        totalRelevance: 0,
+        categories: [],
+        searchQuery: message,
+        processingTime: 0
+      },
+      cotSteps: ['Medical query processing failed', 'Returned fallback response']
     }
   }
 }
@@ -1292,11 +1622,14 @@ function createEnhancedResponse(
 
 // ==================== MESSAGE PROCESSING ====================
 
-async function processEnhancedUserMessage(message: string): Promise<ApiResponse> {
+async function processEnhancedUserMessage(
+  message: string,
+  userId: string = 'anonymous'
+): Promise<ApiResponse> {
   const startTime = Date.now()
 
   try {
-    console.log(`📝 Processing message: "${message.substring(0, 50)}..."`)
+    console.log(`📝 Processing message for user ${userId}: "${message.substring(0, 50)}..."`)
 
     const sentimentAnalysis = enhancedSentimentAnalysis(message)
     conversationContext.userMood = sentimentAnalysis.sentiment
@@ -1343,7 +1676,7 @@ async function processEnhancedUserMessage(message: string): Promise<ApiResponse>
 
     try {
       console.log('🤖 Starting enhanced AI processing...')
-      const aiResponse = await callEnhancedLlamaWithCoTAndRAG(message, conversationContext)
+      const aiResponse = await callEnhancedLlamaWithCoTAndRAG(message, conversationContext, userId)
 
       updateConversationHistory(message, sentimentAnalysis)
 
@@ -1498,7 +1831,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       )
       response.mode = 'medical'
     } else {
-      response = await processEnhancedUserMessage(message)
+      response = await processEnhancedUserMessage(message, userId)
       response.mode = activeMode
     }
 

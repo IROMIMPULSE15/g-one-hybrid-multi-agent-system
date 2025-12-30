@@ -21,7 +21,7 @@ export async function POST(req: Request) {
         console.warn('Deepsearch LLM failed, falling back to web-only summary:', e);
       }
     }
-
+    
     // fallback web-only summary
     return NextResponse.json({ success: true, type: "deepsearch", response: snippets, sources: ["DuckDuckGo"] });
   } catch (error) {
