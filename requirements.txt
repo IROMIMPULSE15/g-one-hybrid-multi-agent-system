@@ -1,0 +1,17 @@
+# Root requirements for CI/CD and security scanning
+# Medical agent dependencies
+fastapi==0.104.1
+uvicorn==0.24.0
+pydantic==2.5.0
+python-dotenv==1.0.0
+aiohttp==3.9.1
+google-generativeai==0.3.0
+pinecone-client==3.0.0
+openai==1.3.0
+requests==2.31.0
+
+# Testing dependencies
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.2
