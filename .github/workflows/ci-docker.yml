@@ -19,11 +19,6 @@ jobs:
         with:
           node-version: '18'
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
       - name: Install pnpm
         run: npm i -g pnpm@7.29.0
 
@@ -33,12 +28,6 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm build
 
-      - name: Install Python deps
-        working-directory: ./medical-agent
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-
       - name: Build docker images via docker-compose
         run: |
           docker compose build --pull
@@ -47,19 +36,15 @@ jobs:
         run: |
           docker compose up -d
 
-      - name: Wait for services
+      - name: Wait for frontend to start
         run: |
           for i in {1..20}; do 
-            curl -sS http://localhost:8001/health && break || sleep 3;
+            curl -sS http://localhost:3000/api/health && break || sleep 3;
           done
 
       - name: Smoke test frontend health
         run: |
           curl -f http://localhost:3000/api/health
-
-      - name: Smoke test backend health
-        run: |
-          curl -f http://localhost:8001/health
 
       - name: Tear down
         run: docker compose down --volumes --remove-orphans

@@ -29,7 +29,6 @@ jobs:
         run: |
           pypy -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pypy -m pip install -r requirements.txt; fi
-          if [ -f medical-agent/requirements.txt ]; then pypy -m pip install -r medical-agent/requirements.txt; fi
           pypy -m pip install pytest pytest-asyncio pytest-cov
       
       - name: Run tests
