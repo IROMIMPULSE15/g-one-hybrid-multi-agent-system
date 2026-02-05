@@ -61,9 +61,8 @@ export default function Navigation() {
         initial={{ y: -100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.8, ease: "easeOut" }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-          scrolled ? "bg-black/20 backdrop-blur-md border-b border-white/10" : "bg-transparent"
-        }`}
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-black/20 backdrop-blur-md border-b border-white/10" : "bg-transparent"
+          }`}
       >
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
@@ -182,10 +181,10 @@ export default function Navigation() {
                     </div>
                   ))}
                   <div className="px-4 py-2 space-y-2">
-                    {!isLoading && (
+                    {status !== 'loading' && (
                       <>
-                        {user ? (
-                          <div className="text-white">Welcome, {user.name}!</div>
+                        {session?.user ? (
+                          <div className="text-white">Welcome, {session.user.name}!</div>
                         ) : (
                           <>
                             <Link href="/auth/login" onClick={() => setIsOpen(false)}>

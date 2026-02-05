@@ -1,7 +1,10 @@
-// Medical Search Module with Llama 3 Integration
-// Specialized medical reasoning using Ollama + Llama 3
+// Medical Search Module with Llama 3 and Meditron Integration
+// Specialized medical reasoning using:
+// - Meditron (medical-specific LLM) - Recommended for medical queries
+// - Llama 3 via Ollama (general LLM) - Fallback option
 
 import { generateWithProvider } from './llm_provider';
+import { generateMedicalResponse, type MeditronOptions } from './meditron';
 
 // ==================== TYPES ====================
 
@@ -166,6 +169,8 @@ export async function searchMedical(
         model?: string;
         temperature?: number;
         includeRelated?: boolean;
+        useMeditron?: boolean; // New option to use Meditron
+        userPlan?: 'Free' | 'Pro' | 'Enterprise'; // For model selection
     }
 ): Promise<MedicalResponse> {
     try {
@@ -182,13 +187,65 @@ export async function searchMedical(
         // Build specialized prompt
         const prompt = buildMedicalPrompt(medicalQuery);
 
-        // Use Llama 3 via Ollama for medical reasoning
-        const llmResponse = await generateWithProvider(prompt, {
-            model: options?.model || 'llama3', // Use llama3 model
-            temperature: options?.temperature || 0.3, // Lower temperature for medical accuracy
-            maxTokens: 2048, // Longer responses for comprehensive medical info
-            systemPrompt: `You are a medical knowledge assistant. Provide accurate, evidence-based information while always emphasizing that users should consult healthcare professionals for personalized medical advice.`
-        });
+        // Determine if we should use Meditron
+        const useMeditron = options?.useMeditron ?? true; // Default to Meditron
+        const isPro = options?.userPlan === 'Pro' || options?.userPlan === 'Enterprise';
+
+        let llmResponse: any;
+        let modelUsed: string;
+
+        if (useMeditron) {
+            try {
+                // Pro users get access to Meditron-70B for better accuracy
+                const meditronModel = isPro ? 'meditron-70b' : 'meditron-7b';
+
+                console.log(`🏥 Using Meditron ${isPro ? '70B (Pro)' : '7B'} for medical query...`);
+
+                const meditronResponse = await generateMedicalResponse(prompt, {
+                    model: meditronModel,
+                    temperature: options?.temperature || 0.3,
+                    maxTokens: 2048,
+                    useLocal: true // Prefer local Ollama
+                });
+
+                llmResponse = {
+                    text: meditronResponse.text,
+                    model: meditronResponse.model,
+                    provider: meditronResponse.provider,
+                    confidence: meditronResponse.confidence
+                };
+
+                modelUsed = `Meditron ${isPro ? '70B' : '7B'} (${meditronResponse.provider})`;
+
+                // Add medical context to response if available
+                if (meditronResponse.medicalContext) {
+                    console.log(`📊 Medical context: ${JSON.stringify(meditronResponse.medicalContext)}`);
+                }
+
+            } catch (meditronError: any) {
+                console.warn('⚠️ Meditron failed, falling back to Llama 3:', meditronError.message);
+
+                // Fallback to Llama 3
+                llmResponse = await generateWithProvider(prompt, {
+                    model: options?.model || 'llama3',
+                    temperature: options?.temperature || 0.3,
+                    maxTokens: 2048,
+                    systemPrompt: `You are a medical knowledge assistant. Provide accurate, evidence-based information while always emphasizing that users should consult healthcare professionals for personalized medical advice.`
+                });
+
+                modelUsed = `Llama 3 (fallback)`;
+            }
+        } else {
+            // Use Llama 3 directly if Meditron is disabled
+            llmResponse = await generateWithProvider(prompt, {
+                model: options?.model || 'llama3',
+                temperature: options?.temperature || 0.3,
+                maxTokens: 2048,
+                systemPrompt: `You are a medical knowledge assistant. Provide accurate, evidence-based information while always emphasizing that users should consult healthcare professionals for personalized medical advice.`
+            });
+
+            modelUsed = llmResponse.model || 'Llama 3';
+        }
 
         // Extract related topics if requested
         let relatedTopics: string[] | undefined;
@@ -197,15 +254,18 @@ export async function searchMedical(
         }
 
         // Calculate confidence based on response quality
-        const confidence = calculateConfidence(llmResponse.text, queryType);
+        const confidence = llmResponse.confidence || calculateConfidence(llmResponse.text, queryType);
+
+        console.log(`✅ Medical response generated using ${modelUsed} (confidence: ${(confidence * 100).toFixed(1)}%)`);
 
         return {
             answer: llmResponse.text,
             confidence,
             sources: [
                 'General Medical Knowledge',
-                `AI Model: ${llmResponse.model}`,
-                'Evidence-based medical literature'
+                `AI Model: ${modelUsed}`,
+                'Evidence-based medical literature',
+                ...(isPro ? ['Enhanced with Pro features'] : [])
             ],
             disclaimer: MEDICAL_DISCLAIMER,
             relatedTopics

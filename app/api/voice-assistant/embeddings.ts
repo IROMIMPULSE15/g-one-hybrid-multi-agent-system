@@ -5,8 +5,7 @@
 
 /**
  * Generate embeddings for text using available providers
- * Priority: Hugging Face (FREE) > Fallback (always works)
- * Note: OpenAI and Together AI are paid services and disabled by default
+ * Uses enhanced fallback embedding (no API key required)
  * @param text - The text to generate embeddings for
  * @returns A vector embedding (array of numbers)
  */
@@ -19,16 +18,7 @@ export async function generateEmbedding(text: string): Promise<number[]> {
         return generateFallbackEmbedding(cleanText)
     }
 
-    // Try Hugging Face embeddings FIRST (FREE tier available!)
-    if (process.env.HUGGINGFACE_API_KEY) {
-        try {
-            return await generateHuggingFaceEmbedding(cleanText)
-        } catch (error) {
-            console.warn('⚠️ Hugging Face embedding failed, using fallback:', (error as any)?.message)
-        }
-    }
-
-    // Fallback to enhanced local embedding generation (always works, no API needed)
+    // Use enhanced fallback embedding generation (always works, no API needed)
     console.log('ℹ️ Using enhanced fallback embedding generation (no API key required)')
     return generateFallbackEmbedding(cleanText)
 }
@@ -98,51 +88,11 @@ async function generateTogetherEmbedding(text: string): Promise<number[]> {
     const embedding = data.data?.[0]?.embedding
 
     if (!embedding || !Array.isArray(embedding)) {
-        throw new Error('Invalid embedding response from Together AI')
+        throw new Error('Invalid updation of response from Together AI')
     }
 
     console.log(`✅ Generated Together AI embedding (dimension: ${embedding.length})`)
     return embedding
-}
-
-/**
- * Generate embeddings using Hugging Face Inference API
- */
-async function generateHuggingFaceEmbedding(text: string): Promise<number[]> {
-    const model = process.env.HUGGINGFACE_EMBEDDING_MODEL || 'sentence-transformers/all-MiniLM-L6-v2'
-    const apiUrl = `https://api-inference.huggingface.co/pipeline/feature-extraction/${model}`
-
-    const response = await fetch(apiUrl, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${process.env.HUGGINGFACE_API_KEY}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            inputs: text,
-            options: {
-                wait_for_model: true
-            }
-        })
-    })
-
-    if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const errorMsg = (errorData as any).error || `HTTP ${response.status}`
-        throw new Error(`Hugging Face Embedding API error: ${errorMsg}`)
-    }
-
-    const embedding: any = await response.json()
-
-    // Hugging Face returns nested arrays, flatten if needed
-    const flatEmbedding = Array.isArray(embedding[0]) ? embedding[0] : embedding
-
-    if (!Array.isArray(flatEmbedding)) {
-        throw new Error('Invalid embedding response from Hugging Face')
-    }
-
-    console.log(`✅ Generated Hugging Face embedding (dimension: ${flatEmbedding.length})`)
-    return flatEmbedding
 }
 
 /**
@@ -168,8 +118,6 @@ function generateFallbackEmbedding(text: string, dimension: number = 384): numbe
     for (const word of words) {
         wordFreq.set(word, (wordFreq.get(word) || 0) + 1)
     }
-
-    // Generate embedding from multiple features
     let featureIndex = 0
 
     // Feature 1: Word-level embeddings (using hash)
@@ -192,15 +140,13 @@ function generateFallbackEmbedding(text: string, dimension: number = 384): numbe
             embedding[idx] += 0.5 * Math.cos(ngramHash * 0.1)
         }
     }
-
     // Feature 3: Position-weighted character features
     for (let i = 0; i < normalizedText.length; i++) {
         const charCode = normalizedText.charCodeAt(i)
-        const positionWeight = 1.0 / (1.0 + i * 0.01) // Earlier characters weighted more
+        const positionWeight = 1.0 / (1.0 + i * 0.01)
         const idx = (charCode * (i + 1)) % dimension
         embedding[idx] += positionWeight * 0.3
     }
-
     // Feature 4: Text length and structure features
     const lengthFeature = Math.log(1 + normalizedText.length) / 10
     const wordCountFeature = Math.log(1 + words.length) / 10
@@ -221,7 +167,6 @@ function generateFallbackEmbedding(text: string, dimension: number = 384): numbe
     console.log(`⚠️ Generated enhanced fallback embedding (dimension: ${dimension}, words: ${words.length})`)
     return embedding
 }
-
 /**
  * Simple hash function for strings
  */
@@ -258,20 +203,31 @@ export async function generateBatchEmbeddings(texts: string[]): Promise<number[]
 }
 
 /**
+/**
  * Calculate cosine similarity between two embeddings
+ * Enhanced with memoization for repeated calculations
  * @param a - First embedding vector
  * @param b - Second embedding vector
  * @returns Similarity score between -1 and 1
  */
+const similarityCache = new Map<string, number>()
+
 export function cosineSimilarity(a: number[], b: number[]): number {
     if (a.length !== b.length) {
         throw new Error('Embeddings must have the same dimension')
+    }
+
+    // Create cache key (simple hash of both vectors)
+    const cacheKey = `${a.slice(0, 5).join(',')}_${b.slice(0, 5).join(',')}`
+    if (similarityCache.has(cacheKey)) {
+        return similarityCache.get(cacheKey)!
     }
 
     let dotProduct = 0
     let magnitudeA = 0
     let magnitudeB = 0
 
+    // Single loop optimization - calculate all values in one pass
     for (let i = 0; i < a.length; i++) {
         dotProduct += a[i] * b[i]
         magnitudeA += a[i] * a[i]
@@ -285,5 +241,131 @@ export function cosineSimilarity(a: number[], b: number[]): number {
         return 0
     }
 
-    return dotProduct / (magnitudeA * magnitudeB)
+    const similarity = dotProduct / (magnitudeA * magnitudeB)
+
+    // Cache result (limit cache size)
+    if (similarityCache.size > 1000) {
+        const firstKey = similarityCache.keys().next().value
+        similarityCache.delete(firstKey)
+    }
+    similarityCache.set(cacheKey, similarity)
+
+    return similarity
+}
+
+/**
+ * Min-Heap implementation for efficient top-K search
+ * Time Complexity: O(log k) for insert, O(1) for peek
+ */
+class MinHeap<T> {
+    private heap: Array<{ value: T; score: number }> = []
+
+    insert(value: T, score: number): void {
+        this.heap.push({ value, score })
+        this.bubbleUp(this.heap.length - 1)
+    }
+
+    extractMin(): { value: T; score: number } | null {
+        if (this.heap.length === 0) return null
+        if (this.heap.length === 1) return this.heap.pop()!
+
+        const min = this.heap[0]
+        this.heap[0] = this.heap.pop()!
+        this.bubbleDown(0)
+        return min
+    }
+
+    peek(): { value: T; score: number } | null {
+        return this.heap.length > 0 ? this.heap[0] : null
+    }
+
+    size(): number {
+        return this.heap.length
+    }
+
+    private bubbleUp(index: number): void {
+        while (index > 0) {
+            const parentIndex = Math.floor((index - 1) / 2)
+            if (this.heap[index].score >= this.heap[parentIndex].score) break
+
+            [this.heap[index], this.heap[parentIndex]] = [this.heap[parentIndex], this.heap[index]]
+            index = parentIndex
+        }
+    }
+
+    private bubbleDown(index: number): void {
+        while (true) {
+            let smallest = index
+            const leftChild = 2 * index + 1
+            const rightChild = 2 * index + 2
+
+            if (leftChild < this.heap.length && this.heap[leftChild].score < this.heap[smallest].score) {
+                smallest = leftChild
+            }
+            if (rightChild < this.heap.length && this.heap[rightChild].score < this.heap[smallest].score) {
+                smallest = rightChild
+            }
+            if (smallest === index) break
+
+            [this.heap[index], this.heap[smallest]] = [this.heap[smallest], this.heap[index]]
+            index = smallest
+        }
+    }
+}
+
+/**
+ * Find top-K most similar embeddings efficiently using min-heap
+ * Time Complexity: O(n log k) instead of O(n log n) with full sort
+ * Space Complexity: O(k)
+ * 
+ * @param queryEmbedding - The query embedding vector
+ * @param candidates - Array of candidate embeddings with metadata
+ * @param k - Number of top results to return
+ * @returns Top-K most similar embeddings sorted by similarity (descending)
+ */
+export function findTopKSimilar<T>(
+    queryEmbedding: number[],
+    candidates: Array<{ embedding: number[]; data: T }>,
+    k: number = 10
+): Array<{ data: T; similarity: number }> {
+    const minHeap = new MinHeap<{ data: T; similarity: number }>()
+
+    // Process each candidate
+    for (const candidate of candidates) {
+        const similarity = cosineSimilarity(queryEmbedding, candidate.embedding)
+
+        if (minHeap.size() < k) {
+            // Heap not full, add item
+            minHeap.insert({ data: candidate.data, similarity }, similarity)
+        } else {
+            // Heap full, only add if better than minimum
+            const min = minHeap.peek()
+            if (min && similarity > min.score) {
+                minHeap.extractMin()
+                minHeap.insert({ data: candidate.data, similarity }, similarity)
+            }
+        }
+    }
+
+    // Extract all items and sort descending
+    const results: Array<{ data: T; similarity: number }> = []
+    while (minHeap.size() > 0) {
+        const item = minHeap.extractMin()
+        if (item) results.unshift(item.value) // Add to front for descending order
+    }
+
+    return results
+}
+
+/**
+ * Batch similarity calculation with parallel processing simulation
+ * @param queryEmbedding - The query embedding
+ * @param embeddings - Array of embeddings to compare
+ * @returns Array of similarity scores
+ */
+export function batchCosineSimilarity(
+    queryEmbedding: number[],
+    embeddings: number[][]
+): number[] {
+    return embeddings.map(embedding => cosineSimilarity(queryEmbedding, embedding))
 }

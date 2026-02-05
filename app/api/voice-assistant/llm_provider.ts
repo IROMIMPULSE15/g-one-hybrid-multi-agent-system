@@ -1,4 +1,4 @@
- // Enhanced LLM Provider with Advanced Features
+// Enhanced LLM Provider with Advanced Features
 // Supports: Ollama, Gemini, OpenAI, Llama (Hugging Face)
 // Features: Auto-fallback, streaming, caching, context enrichment, smart prompting
 
@@ -97,22 +97,151 @@ class PromptEnricher {
   static enrichPrompt(prompt: string, opts?: LLMOptions): string {
     if (!opts?.enrichResponse) return prompt;
 
-    // Don't enrich if systemPrompt is already provided (to avoid double system prompts)
+    // Don't enrich if systemPrompt is already provided
     if (opts?.systemPrompt) return prompt;
 
-    const enrichedPrompt = `You are a helpful AI assistant. Provide comprehensive, well-structured answers.
+    // Detect query type for appropriate structure
+    const queryType = this.detectQueryType(prompt);
+
+    const enrichedPrompt = `You are a helpful AI assistant that provides comprehensive, well-structured answers.
 
 User Query: ${prompt}
 
-Please provide:
-1. A clear, direct answer
-2. Relevant context and explanation
-3. Examples if applicable
-4. Any important caveats or considerations
+Please provide a ${queryType} response with the following structure:
+
+${this.getStructureGuide(queryType)}
+
+Important guidelines:
+- Use clear headings with ## for sections
+- Provide specific, concrete examples
+- Include bullet points for lists
+- Keep explanations clear and concise
+- Add relevant context where helpful
+- Use proper markdown formatting
 
 Response:`;
 
     return enrichedPrompt;
+  }
+
+  private static detectQueryType(prompt: string): string {
+    const lowerPrompt = prompt.toLowerCase();
+
+    if (/^what is|^define|^meaning of/.test(lowerPrompt)) {
+      return 'definition';
+    }
+
+    if (/^how does|^why does|^explain|^how come/.test(lowerPrompt)) {
+      return 'explanation';
+    }
+
+    if (/\bvs\b|\bversus\b|compare|difference between/.test(lowerPrompt)) {
+      return 'comparison';
+    }
+
+    if (/^how to|^how do i|^how can i/.test(lowerPrompt)) {
+      return 'how-to guide';
+    }
+
+    return 'comprehensive';
+  }
+
+  private static getStructureGuide(queryType: string): string {
+    switch (queryType) {
+      case 'definition':
+        return `## 📖 Definition
+- Clear, concise definition in 1-2 sentences
+
+## 🔍 Key Points
+- 3-5 important characteristics or features
+- Use bullet points for clarity
+
+## 💡 Example
+- Provide a concrete, real-world example
+- Make it relatable and easy to understand
+
+## 🎯 Why It Matters
+- Explain the significance or importance
+- How it's used in practice
+
+## 📚 Related Concepts
+- List 2-3 related topics or terms`;
+
+      case 'explanation':
+        return `## 🎯 Overview
+- Brief introduction to the concept
+
+## ⚙️ How It Works
+- Explain the mechanism or process
+- Break down complex ideas into simple parts
+
+## 📊 Step-by-Step
+- If applicable, provide numbered steps
+- Show the sequence or flow
+
+## 💡 Real-World Example
+- Concrete example demonstrating the concept
+- Make it practical and relatable
+
+## ✅ Key Takeaways
+- 3-5 main points to remember`;
+
+      case 'comparison':
+        return `## 📊 Quick Overview
+- Brief introduction to both items
+
+## 🔍 Key Differences
+- List main differences in bullet points
+- Be specific and clear
+
+## ⚖️ Pros and Cons
+- Advantages and disadvantages of each
+- Help users make informed decisions
+
+## 🎯 When to Use Each
+- Practical guidance on choosing between them
+- Use cases for each option
+
+## ✅ Summary
+- Final recommendation or conclusion`;
+
+      case 'how-to guide':
+        return `## 🎯 Goal
+- What you'll achieve by following this guide
+
+## 📋 Prerequisites
+- What you need before starting
+- Required knowledge or tools
+
+## 🔧 Step-by-Step Instructions
+1. First step with clear action
+2. Second step with details
+3. Continue with numbered steps
+
+## 💡 Tips & Best Practices
+- Helpful hints for success
+- Common optimizations
+
+## ⚠️ Common Mistakes to Avoid
+- Pitfalls to watch out for
+
+## ✅ Summary
+- Quick recap of what was covered`;
+
+      default:
+        return `## Overview
+- Introduction to the topic
+
+## Main Points
+- Key information organized clearly
+- Use bullet points and sections
+
+## Examples
+- Concrete examples where applicable
+
+## Summary
+- Brief conclusion or key takeaways`;
+    }
   }
 
   static enhanceResponse(text: string): string {
@@ -124,6 +253,14 @@ Response:`;
 
     // Ensure proper spacing after punctuation
     enhanced = enhanced.replace(/([.!?])([A-Z])/g, '$1 $2');
+
+    // Ensure headers have proper spacing
+    enhanced = enhanced.replace(/\n(#{1,6}\s)/g, '\n\n$1');
+    enhanced = enhanced.replace(/(#{1,6}\s.+)\n([^#\n])/g, '$1\n\n$2');
+
+    // Clean up bullet points
+    enhanced = enhanced.replace(/\n-\s/g, '\n- ');
+    enhanced = enhanced.replace(/\n\*\s/g, '\n* ');
 
     return enhanced;
   }

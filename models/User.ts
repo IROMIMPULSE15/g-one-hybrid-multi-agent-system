@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
 export interface IUser {

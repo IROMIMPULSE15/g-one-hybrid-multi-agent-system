@@ -1,0 +1,209 @@
+{
+  "timestamp": "2026-02-05T06:05:42.440038",
+  "base_url": "http://localhost:3000",
+  "tests": [
+    {
+      "success": true,
+      "query": "Hello, how are you?",
+      "response": "Good morning!\n\n**Hello Anonymous!**\n\nI'm happy to chat with you, but I have to admit that I don't feel emotions like humans do. I'm designed to simulate conversation and provide helpful responses based on my training data, but I don't have subjective experiences or feelings. I exist solely to assist and provide information to users like you.\n\n**How can I help you today?**\n\nI'm here to listen, answer your questions, and provide support on a wide range of topics. Whether it's about health, education, business, or anything else, feel free to share what's on your mind. Keep in mind that my knowledge might not be as up-to-date as a human expert, but I'll do my best to provide accurate and helpful information based on my training.\n\n**Getting to know you**\n\nBefore we dive into our conversation, I want to get a sense of where you're coming from. What's been on your mind lately? Are you looking for advice, seeking clarification on something, or just wanting to chat? Let me know, and I'll do my best to tailor our conversation to your needs.\n\n(Note: Since this is the first question in our conversation, there is no relevant knowledge to reference check from previous conversations. The response aims to establish a friendly tone while acknowledging the lack of prior context.)",
+      "provider": "unknown",
+      "model": "orchestrator-ensemble",
+      "tokens_used": 3900,
+      "response_time": 5.384517431259155,
+      "rag_results": 0,
+      "cot_steps": 10,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": false,
+        "should_use_cot": false,
+        "max_tokens": 200,
+        "description": "Greeting - should use minimal resources"
+      },
+      "validations": [
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 200",
+          "actual": 3900,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "success": true,
+      "query": "What is artificial intelligence?",
+      "response": "**Artificial intelligence**\n\nArtificial intelligence (AI) is the capability of computational systems to perform tasks typically associated with human intelligence, such as learning, reasoning, problem-solving, perception, and decision-making. It is a field of research in computer science that develops and studies methods and software that enable machines to perceive their environment and use learning and intelligence to take actions that maximize their chances of achieving defined goals.\nHigh-profile applications of AI include advanced web search engines (e.g., Google Search); recommendation systems (used by YouTube, Amazon, and Netflix); virtual assistants (e.g., Google Assistant, Siri, and Alexa); autonomous vehicles (e.g., Waymo); generative and creative tools (e.g., language models and AI art); and superhuman play and analysis in strategy games (e.g., chess and Go). However, many AI applications are not perceived as AI: \"A lot of cutting edge AI has filtered into general applications, often without being called AI because once something becomes useful enough and common enough it's not labeled AI anymore.\"\nVarious subfields of AI research are centered around particular goals and the use of particular tools. The traditional goals of AI research include learning, reasoning, knowledge representation, planning, natural language processing, perception, and support for robotics.\n\n**Related topics:** Artificial general intelligence, AI boom\n\n[Read more on Wikipedia](https://en.wikipedia.org/wiki/Artificial_intelligence)",
+      "provider": "unknown",
+      "model": "unknown",
+      "tokens_used": 4000,
+      "response_time": 1.048940658569336,
+      "rag_results": 1,
+      "cot_steps": 5,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": false,
+        "should_use_cot": false,
+        "max_tokens": 500,
+        "description": "Simple Q&A - medium model"
+      },
+      "validations": [
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 500",
+          "actual": 4000,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "success": true,
+      "query": "What are the latest research findings on transformer models in NLP?",
+      "response": "## Executive Summary\n\nThe latest research findings on transformer models in Natural Language Processing (NLP) have revolutionized the field of NLP, demonstrating unparalleled performance and versatility. Recent advancements have led to significant improvements in language understanding, generation, and translation tasks. This response provides an overview of the current state of transformer models in NLP, highlighting key components, context, strategic insights, practical applications, and a conclusion.\n\n\n## Key Pillars/Components\n\n*   **Architecture**: Transformer models are primarily based on self-attention mechanisms, which allow them to weigh the importance of different words or tokens in a sentence relative to each other. This architecture has been widely adopted in various NLP tasks.\n*   **Training Methods**: Transformers can be trained using a variety of methods, including masked language modeling, next sentence prediction, and sentence classification. These methods have contributed significantly to the development of transformer models.\n*   **Pre-training and Fine-tuning**: Pre-training transformers on large datasets followed by fine-tuning on specific tasks has become a standard approach for achieving state-of-the-art performance in NLP applications.\n\n\n## Context & Landscape\n\nThe landscape of NLP has evolved significantly over the past decade, with the emergence of transformer models marking a major turning point. The success of transformer models can be attributed to their ability to effectively model complex relationships between words and tokens.\n\n\n## Strategic Insights\n\n*   **Attention Mechanism**: The self-attention mechanism is a key innovation in transformer architecture, allowing it to capture long-range dependencies and contextual information more effectively than traditional recurrent neural networks (RNNs).\n*   **Multi-task Learning**: Transformers can be trained on multiple tasks simultaneously, which has led to significant improvements in performance across various NLP applications.\n*   **Explainability and Interpretability**: Recent research has focused on developing techniques for explaining and interpreting transformer models' decisions, which is crucial for building trust in AI systems.\n\n\n## Practical Applications\n\n*   **Language Translation**: Transformer models have achieved state-of-the-art results in machine translation tasks, enabling high-quality translations between languages.\n*   **Text Generation**: Transformers can be used to generate coherent text based on input prompts or topics, with applications in chatbots, content generation, and more.\n*   **Sentiment Analysis and Text Classification**: Transformers have been successfully applied to sentiment analysis and text classification tasks, demonstrating their ability to capture nuanced patterns in language.\n\n\n## Conclusion\n\nThe latest research findings on transformer models in NLP have significantly advanced the field, offering unparalleled performance and versatility. As the landscape continues to evolve, it is essential to stay up-to-date with the latest developments and advancements in this rapidly changing field.",
+      "provider": "unknown",
+      "model": "unknown",
+      "tokens_used": 4100,
+      "response_time": 0.2285006046295166,
+      "rag_results": 1,
+      "cot_steps": 6,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": true,
+        "should_use_cot": false,
+        "max_tokens": 1000,
+        "description": "Knowledge query - should use RAG"
+      },
+      "validations": [
+        {
+          "feature": "RAG",
+          "expected": true,
+          "actual": true,
+          "passed": true
+        },
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 1000",
+          "actual": 4100,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "success": true,
+      "query": "Compare the advantages and disadvantages of supervised learning versus unsupervised learning, and explain when to use each approach",
+      "response": "**Unsupervised vs Supervised Learning: A Balance Between Discovery and Guidance**\n\nAs we delve into the world of machine learning, it's essential to understand the differences between supervised and unsupervised learning approaches. These two paradigms have distinct advantages and disadvantages, which I'll outline below.\n\n**Supervised Learning: The Guided Approach**\n------------------------------------------------\n\nSupervised learning is a type of machine learning where the algorithm is trained on labeled data, meaning each example is associated with a target output. This approach excels when we want to predict continuous values or classify data into predefined categories. Supervised learning algorithms are guided by the labeled data, allowing them to learn patterns and relationships that can lead to accurate predictions.\n\nHowever, supervised learning also has some drawbacks. The algorithm requires large amounts of labeled data, which can be time-consuming and costly to obtain. Moreover, if the labeling process is inaccurate or incomplete, it can significantly impact the performance of the model.\n\n**Unsupervised Learning: The Discovery Approach**\n-------------------------------------------------\n\nOn the other hand, unsupervised learning involves training algorithms on unlabeled data. This approach enables us to identify hidden patterns, relationships, and structures in the data that might not be apparent through supervised learning. Unsupervised learning is particularly useful when we want to group similar data points, detect anomalies, or identify underlying trends.\n\nHowever, unsupervised learning also has its limitations. Without labeled data, it's challenging to evaluate the performance of the algorithm, making it difficult to understand how well it generalizes to new, unseen data.\n\n**When to Use Each Approach**\n---------------------------\n\nSo, when should we use supervised versus unsupervised learning? Here are some guidelines:\n\n* **Supervised learning** is suitable for:\n\t+ Predicting continuous values (e.g., temperature, stock prices)\n\t+ Classifying data into predefined categories\n\t+ Applications where accuracy and precision matter (e.g., medical diagnosis, image classification)\n* **Unsupervised learning** is suitable for:\n\t+ Identifying hidden patterns and relationships in large datasets\n\t+ Grouping similar data points\n\t+ Detecting anomalies or outliers\n\t+ Exploratory data analysis and feature engineering\n\nIn conclusion, both supervised and unsupervised learning approaches have their strengths and weaknesses. By understanding the advantages and disadvantages of each, we can choose the most suitable approach for our specific use case and achieve better results.\n\n**References**\n\n* **\"Machine Learning: A Probabilistic Perspective\" by Kevin P. Murphy**: This book provides a comprehensive introduction to machine learning, including supervised and unsupervised learning.\n* **\"Python Machine Learning\" by Sebastian Raschka**: This online resource offers practical guidance on implementing supervised and unsupervised learning algorithms in Python.\n\nI hope this explanation has been helpful! Do you have any specific questions or examples you'd like me to elaborate on?",
+      "provider": "unknown",
+      "model": "orchestrator-ensemble",
+      "tokens_used": 4200,
+      "response_time": 10.10068678855896,
+      "rag_results": 0,
+      "cot_steps": 10,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": true,
+        "should_use_cot": true,
+        "max_tokens": 2500,
+        "description": "Complex reasoning - full RAG + CoT"
+      },
+      "validations": [
+        {
+          "feature": "RAG",
+          "expected": true,
+          "actual": false,
+          "passed": false
+        },
+        {
+          "feature": "CoT",
+          "expected": true,
+          "actual": true,
+          "passed": true
+        },
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 2500",
+          "actual": 4200,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "success": true,
+      "query": "What are the symptoms and treatment options for type 2 diabetes?",
+      "response": "I'm happy to help you with your query! As a medical knowledge assistant, I'll provide you with evidence-based information on type 2 diabetes symptoms and treatment options.\n\n**Possible Causes (from most to least common):**\n\n1. **Insulin resistance**: The body's cells become less responsive to insulin, making it harder for glucose to enter the cells.\n2. **Genetic predisposition**: Family history plays a significant role in developing type 2 diabetes.\n3. **Obesity**: Excess weight and fat around the abdominal area increase the risk of developing insulin resistance.\n4. **Physical inactivity**: A sedentary lifestyle contributes to insulin resistance and glucose intolerance.\n5. **Hormonal imbalances**: Certain hormonal changes, such as those experienced during menopause or polycystic ovary syndrome (PCOS), can affect insulin sensitivity.\n\n**When to Seek Care:**\n\nRed flags that require immediate medical attention:\n\n1. **Severe symptoms**: Nausea, vomiting, abdominal pain, or rapid weight loss.\n2. **Uncontrolled blood sugar levels**: Blood glucose levels above 300 mg/dL (16.7 mmol/L) in adults or above 250 mg/dL (13.9 mmol/L) in children.\n3. **Ketones in urine**: Presence of ketones, a sign of diabetic ketoacidosis, which can be life-threatening if left untreated.\n\n**Self-Care:**\n\nSafe home remedies and management strategies:\n\n1. **Healthy diet**: Focus on whole foods, fruits, vegetables, whole grains, lean proteins, and low-fat dairy products.\n2. **Regular exercise**: Aim for at least 150 minutes of moderate-intensity aerobic exercise or 75 minutes of vigorous-intensity aerobic exercise per week.\n3. **Stress management**: Engage in stress-reducing activities like meditation, yoga, or deep breathing exercises.\n4. **Monitor blood sugar levels**: Check your blood glucose levels regularly to adjust your treatment plan as needed.\n\n**Next Steps:**\n\nRecommendations for follow-up:\n\n1. **Schedule a doctor's appointment**: Discuss your symptoms and medical history with your healthcare provider to determine the best course of action.\n2. **Get tested**: Undergo a comprehensive physical examination, including blood tests to confirm the diagnosis and monitor blood sugar levels.\n3. **Develop a treatment plan**: Work with your healthcare provider to create a personalized treatment plan that may include lifestyle changes, medication, or insulin therapy.\n\nRemember, this information is general and not intended to replace professional medical advice. If you're experiencing symptoms or concerns, consult with your healthcare provider for personalized guidance.\n\n\n⚠️ MEDICAL DISCLAIMER: This information is for educational purposes only and should not replace professional medical advice. Always consult with a qualified healthcare provider for medical concerns.\n",
+      "provider": "unknown",
+      "model": "unknown",
+      "tokens_used": 4300,
+      "response_time": 0.37789487838745117,
+      "rag_results": 3,
+      "cot_steps": 0,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": true,
+        "should_use_cot": false,
+        "max_tokens": 1000,
+        "description": "Medical query - specialized agent"
+      },
+      "validations": [
+        {
+          "feature": "RAG",
+          "expected": true,
+          "actual": true,
+          "passed": true
+        },
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 1000",
+          "actual": 4300,
+          "passed": false
+        }
+      ]
+    },
+    {
+      "success": true,
+      "query": "Tell me about the history of the Eiffel Tower",
+      "response": "**Victor Lustig**\n\nVictor Lustig (German pronunciation: [ˈvɪktoːɐ̯ ˈlʊstɪç]; 4 January 1890 – 11 March 1947) was a con artist from Austria-Hungary, who undertook a criminal career that involved conducting scams across Europe and the United States during the early 20th century. Lustig is widely regarded as one of the most notorious con artists of his time, and is infamous for being \"the man who sold the Eiffel Tower twice\" and for conducting the \"Rumanian Box\" scam.\n\n\n== Early life ==\nLustig was born in Hostinné, at the time more widely known by its German name Arnau (an der Elbe), part of the Kingdom of Bohemia, Austria-Hungary, as the second of three children, to Ludwig and Amelia \"Fanny\" Lustig. Raised in a German-speaking middle-class Catholic family, Lustig grew up in a four-room house at Tyrsovy street, near the central market square. Lustig's father was a tobacco goods salesman and at one point a mayor of Hostinné, who was reportedly physically abusive towards his children and wife, who was fifteen years his junior.\n\n**Related topics:** Blue (Da Ba Dee), Franchot Tone\n\n[Read more on Wikipedia](https://en.wikipedia.org/wiki/Victor_Lustig)",
+      "provider": "unknown",
+      "model": "unknown",
+      "tokens_used": 4400,
+      "response_time": 0.9531667232513428,
+      "rag_results": 1,
+      "cot_steps": 5,
+      "confidence": 0,
+      "cache_hit": false,
+      "expected_features": {
+        "should_use_rag": true,
+        "should_use_cot": false,
+        "max_tokens": 800,
+        "description": "Wikipedia query - external knowledge"
+      },
+      "validations": [
+        {
+          "feature": "RAG",
+          "expected": true,
+          "actual": true,
+          "passed": true
+        },
+        {
+          "feature": "Token Efficiency",
+          "expected": "<= 800",
+          "actual": 4400,
+          "passed": false
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "total_tests": 6,
+    "successful_tests": 6,
+    "failed_tests": 0,
+    "avg_response_time": 3.015617847442627,
+    "total_tokens_used": 24900,
+    "avg_tokens_per_query": 4150,
+    "rag_usage_count": 4,
+    "cot_usage_count": 5,
+    "validation_pass_rate": 0.36363636363636365
+  }
+}
