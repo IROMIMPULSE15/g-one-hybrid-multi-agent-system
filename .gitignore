@@ -49,6 +49,10 @@ Thumbs.db
 coverage/
 .turbo/
 
+# ComfyUI (external project)
+ComfyUI/
+hf_cache/
+
 # lock files (keep package-lock.json but ignore others)
 yarn.lock
 pnpm-lock.yaml
