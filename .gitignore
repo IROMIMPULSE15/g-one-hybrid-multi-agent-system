@@ -18,8 +18,13 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files - only ignore the main .env file
+# env files
 .env
+.env*.local
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # vercel
 .vercel
@@ -47,39 +52,3 @@ coverage/
 # lock files (keep package-lock.json but ignore others)
 yarn.lock
 pnpm-lock.yaml
-.vercel
-
-# Training and Model Files (Large Files)
-training/g-one-v1-mistral-adapter/*.safetensors
-training/g-one-v1-mistral-adapter/*.bin
-training/g-one-v1-mistral-adapter/tokenizer.model
-training/*.pth
-training/*.pt
-training/checkpoints/
-training/outputs/
-*.safetensors
-*.ckpt
-
-# ComfyUI
-ComfyUI/models/
-ComfyUI/output/
-ComfyUI/input/
-ComfyUI/temp/
-
-# HuggingFace Cache
-hf_cache/
-.cache/huggingface/
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-*.egg-info/
-dist/
-build/
-
-# Jupyter Notebook
-.ipynb_checkpoints/
-*.ipynb

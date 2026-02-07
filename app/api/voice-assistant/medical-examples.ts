@@ -23,6 +23,7 @@ async function example1_BasicMedicalQuery() {
     console.log('Related Topics:', response.relatedTopics);
     console.log('\n' + response.disclaimer);
 }
+
 // ==================== EXAMPLE 2: Symptom Checker ====================
 
 async function example2_SymptomChecker() {

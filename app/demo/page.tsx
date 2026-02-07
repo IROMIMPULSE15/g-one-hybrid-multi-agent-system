@@ -5,11 +5,12 @@ import { motion, AnimatePresence } from "framer-motion"
 import {
   Mic, MicOff, Send, Bot, User, Info, Lock, Search, AlertCircle,
   Stethoscope, BookOpen, Image as ImageIcon, Upload, X,
-  Sparkles, Brain, Loader2, Trash2, Settings
+  Sparkles, Brain, Loader2, Trash2, Settings, Square
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import Navigation from "@/components/Navigation"
 import Text from "@/components/Text"
+import { MarkdownRenderer } from "@/components/MarkdownRenderer"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -17,8 +18,6 @@ import UsageLimitModal from "@/components/UsageLimitModal"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
-import ReactMarkdown from 'react-markdown'
-import remarkGfm from 'remark-gfm'
 
 // Optimized dynamic imports with loading states
 const Canvas = dynamic(() => import("@react-three/fiber").then((mod) => ({ default: mod.Canvas })), {
@@ -159,6 +158,7 @@ export default function DemoPage() {
   const [speechSupported, setSpeechSupported] = useState(false)
   const [speechError, setSpeechError] = useState("")
   const [isListening, setIsListening] = useState(false)
+  const [isSpeaking, setIsSpeaking] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const [showUsageModal, setShowUsageModal] = useState(false)
   const [searchMode, setSearchMode] = useState<string | null>(null)
@@ -166,15 +166,13 @@ export default function DemoPage() {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
-  const [isSpeaking, setIsSpeaking] = useState(false)
-  const [thinkingTime, setThinkingTime] = useState<number | null>(null)
 
   const { data: session, status } = useSession()
   const router = useRouter()
 
   // Convert session to user object for compatibility
   const user = session?.user ? {
-    id: (session.user as any).id || '',
+    id: session.user.id || '',
     name: session.user.name || 'Guest',
     email: session.user.email || '',
     plan: (session.user as any).plan || 'Free',
@@ -362,10 +360,6 @@ export default function DemoPage() {
       setMessages((prev) => [...prev, userMessage])
       setIsProcessing(true)
       setSpeechError("")
-      setThinkingTime(null) // Clear previous thinking time
-
-      // Start tracking thinking time
-      const startTime = Date.now()
 
       try {
         const bodyPayload: any = { message }
@@ -386,11 +380,6 @@ export default function DemoPage() {
         }
 
         const data = await response.json()
-
-        // Calculate thinking time
-        const endTime = Date.now()
-        const thinkTime = ((endTime - startTime) / 1000).toFixed(2)
-        setThinkingTime(parseFloat(thinkTime))
 
         const assistantMessage: Message = {
           id: `${Date.now()}-assistant`,
@@ -432,15 +421,12 @@ export default function DemoPage() {
         // Text-to-speech with error handling and markdown cleaning
         if ("speechSynthesis" in window && !data.imageUrl) {
           try {
-            // Stop any ongoing speech first
-            speechSynthesis.cancel()
-
+            window.speechSynthesis.cancel() // Stop any previous speech
             const cleanedText = cleanTextForSpeech(data.response)
             const utterance = new SpeechSynthesisUtterance(cleanedText)
             utterance.rate = 0.9
             utterance.pitch = 1
 
-            // Track speaking state
             utterance.onstart = () => setIsSpeaking(true)
             utterance.onend = () => setIsSpeaking(false)
             utterance.onerror = () => setIsSpeaking(false)
@@ -572,13 +558,6 @@ export default function DemoPage() {
     }
   }, [isRecording, speechSupported, searchMode, sendMessage, startAudioMonitoring, stopAudioMonitoring])
 
-  const stopSpeech = useCallback(() => {
-    if ("speechSynthesis" in window) {
-      speechSynthesis.cancel()
-      setIsSpeaking(false)
-    }
-  }, [])
-
   const clearConversation = useCallback(() => {
     if (window.confirm("Are you sure you want to clear the conversation?")) {
       setMessages([])
@@ -590,11 +569,8 @@ export default function DemoPage() {
       if (isRecording && recognitionRef.current) {
         recognitionRef.current.stop()
       }
-
-      // Stop any ongoing speech
-      stopSpeech()
     }
-  }, [isRecording, stopSpeech])
+  }, [isRecording])
 
   const returnToGeneralChat = useCallback(() => {
     setSearchMode(null)
@@ -618,7 +594,12 @@ export default function DemoPage() {
     }
   }, [user])
 
-
+  const stopSpeaking = useCallback(() => {
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.cancel()
+      setIsSpeaking(false)
+    }
+  }, [])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -626,10 +607,12 @@ export default function DemoPage() {
       if (recognitionRef.current) {
         recognitionRef.current.stop()
       }
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel()
+      }
       stopAudioMonitoring()
-      stopSpeech()
     }
-  }, [stopAudioMonitoring, stopSpeech])
+  }, [stopAudioMonitoring])
 
   // Loading state
   if (isLoading) {
@@ -739,7 +722,7 @@ export default function DemoPage() {
       />
 
       {/* 3D Background */}
-      <div className="fixed inset-0 z-0 opacity-30 pointer-events-none">
+      <div className="fixed inset-0 z-0 opacity-30">
         <Canvas camera={{ position: [0, 2, 8], fov: 60 }}>
           <Suspense fallback={null}>
             <Environment preset="night" />
@@ -881,11 +864,7 @@ export default function DemoPage() {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {/* Chat Messages */}
-                    <div
-                      className="bg-black/20 rounded-lg p-6 min-h-[600px] max-h-[600px] overflow-y-auto backdrop-blur-sm scroll-smooth overscroll-contain"
-                      style={{ overscrollBehavior: 'contain' }}
-                      onWheel={(e) => e.stopPropagation()}
-                    >
+                    <div className="bg-black/20 rounded-lg p-6 min-h-[600px] max-h-[600px] overflow-y-auto backdrop-blur-sm scroll-smooth">
                       <div className="space-y-4">
                         {messages.length === 0 && (
                           <div className="text-center text-gray-400 py-16">
@@ -965,32 +944,8 @@ export default function DemoPage() {
                                       </div>
                                     )}
 
-                                    {/* Message content with markdown rendering */}
-                                    <div className="prose prose-invert prose-sm max-w-none">
-                                      <ReactMarkdown
-                                        remarkPlugins={[remarkGfm]}
-                                        components={{
-                                          h1: ({ node, ...props }) => <h1 className="text-2xl font-bold text-white mb-3 mt-4" {...props} />,
-                                          h2: ({ node, ...props }) => <h2 className="text-xl font-bold text-white mb-2 mt-3" {...props} />,
-                                          h3: ({ node, ...props }) => <h3 className="text-lg font-semibold text-white mb-2 mt-2" {...props} />,
-                                          p: ({ node, ...props }) => <p className="text-base leading-relaxed mb-2 text-gray-100" {...props} />,
-                                          ul: ({ node, ...props }) => <ul className="list-disc list-inside space-y-1 mb-3 ml-2" {...props} />,
-                                          ol: ({ node, ...props }) => <ol className="list-decimal list-inside space-y-1 mb-3 ml-2" {...props} />,
-                                          li: ({ node, ...props }) => <li className="text-base text-gray-100 leading-relaxed" {...props} />,
-                                          strong: ({ node, ...props }) => <strong className="font-bold text-white" {...props} />,
-                                          em: ({ node, ...props }) => <em className="italic text-gray-200" {...props} />,
-                                          code: ({ node, inline, ...props }: any) =>
-                                            inline ? (
-                                              <code className="bg-black/30 px-1.5 py-0.5 rounded text-sm text-cyan-300 font-mono" {...props} />
-                                            ) : (
-                                              <code className="block bg-black/40 p-3 rounded-lg text-sm text-cyan-300 font-mono overflow-x-auto my-2" {...props} />
-                                            ),
-                                          blockquote: ({ node, ...props }) => <blockquote className="border-l-4 border-purple-500 pl-4 italic text-gray-300 my-2" {...props} />,
-                                          a: ({ node, ...props }) => <a className="text-cyan-400 hover:text-cyan-300 underline" target="_blank" rel="noopener noreferrer" {...props} />,
-                                        }}
-                                      >
-                                        {message.content}
-                                      </ReactMarkdown>
+                                    <div className="text-base leading-relaxed">
+                                      <MarkdownRenderer content={message.content} />
                                     </div>
 
                                     {/* Mode indicator */}
@@ -1040,23 +995,6 @@ export default function DemoPage() {
                           </motion.div>
                         )}
 
-                        {/* Thinking time indicator */}
-                        {thinkingTime !== null && !isProcessing && (
-                          <motion.div
-                            initial={{ opacity: 0, y: -10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0 }}
-                            className="text-center"
-                          >
-                            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-purple-500/20 border border-purple-500/50 rounded-full">
-                              <Brain className="w-4 h-4 text-purple-400" />
-                              <span className="text-purple-300 text-sm">
-                                <Text>Thinking time: {thinkingTime}s</Text>
-                              </span>
-                            </div>
-                          </motion.div>
-                        )}
-
                         {/* Listening indicator */}
                         {isListening && (
                           <motion.div
@@ -1067,20 +1005,6 @@ export default function DemoPage() {
                             <div className="inline-flex items-center space-x-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-full">
                               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
                               <span className="text-green-300 text-sm"><Text>Listening...</Text></span>
-                            </div>
-                          </motion.div>
-                        )}
-
-                        {/* Speaking indicator */}
-                        {isSpeaking && (
-                          <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="text-center"
-                          >
-                            <div className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-full">
-                              <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
-                              <span className="text-blue-300 text-sm"><Text>Speaking...</Text></span>
                             </div>
                           </motion.div>
                         )}
@@ -1221,24 +1145,23 @@ export default function DemoPage() {
                           {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                         </Button>
 
-                        {/* Stop Speech Button */}
-                        {isSpeaking && (
-                          <motion.div
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.8 }}
-                          >
-                            <Button
-                              onClick={stopSpeech}
-                              className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-full shadow-lg shadow-orange-500/30 flex items-center space-x-2"
-                              title="Stop voice playback"
-                              aria-label="Stop voice playback"
+                        <AnimatePresence>
+                          {isSpeaking && (
+                            <motion.div
+                              initial={{ opacity: 0, scale: 0 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              exit={{ opacity: 0, scale: 0 }}
                             >
-                              <MicOff className="w-5 h-5" />
-                              <span className="font-medium">Stop Voice</span>
-                            </Button>
-                          </motion.div>
-                        )}
+                              <Button
+                                onClick={stopSpeaking}
+                                className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/50 flex items-center justify-center transition-all duration-300 ml-2"
+                                title="Stop speaking"
+                              >
+                                <Square className="w-5 h-5 fill-current" />
+                              </Button>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
                       </div>
 
                       {/* Help text */}

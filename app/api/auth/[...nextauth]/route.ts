@@ -57,7 +57,6 @@ const handler = NextAuth({
             chatsLimit: user.plan === "Pro" ? 10000 : user.plan === "Enterprise" ? 50000 : 200,
           };
         } catch (error) {
-          console.error("❌ Authorization error:", error);
           throw new Error("Authentication failed");
         }
       },
@@ -71,9 +70,9 @@ const handler = NextAuth({
     async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
-        token.plan = (user as any).plan;
-        token.chatsUsed = (user as any).chatsUsed;
-        token.chatsLimit = (user as any).chatsLimit;
+        token.plan = user.plan;
+        token.chatsUsed = user.chatsUsed;
+        token.chatsLimit = user.chatsLimit;
       }
       if (account?.provider === "google") {
         token.provider = "google";
@@ -82,10 +81,10 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).id = token.id as string;
-        (session.user as any).plan = token.plan as string;
-        (session.user as any).chatsUsed = token.chatsUsed as number;
-        (session.user as any).chatsLimit = token.chatsLimit as number;
+        session.user.id = token.id as string;
+        session.user.plan = token.plan as string;
+        session.user.chatsUsed = token.chatsUsed as number;
+        session.user.chatsLimit = token.chatsLimit as number;
       }
       return session;
     },

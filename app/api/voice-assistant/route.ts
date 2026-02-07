@@ -4,20 +4,11 @@ import { generateWithProvider, isProviderConfigured } from './llm_provider'
 import { generateEmbedding } from './embeddings'
 import { searchTrainedDataLegacy } from './json_search'
 import { searchMedical } from './medicalsearch'
-import { handleDeepSearchQuery } from './deepsearch'
-import { quickWikipediaLookup, formatWikipediaResponse, isWikipediaSuitable } from './wikipedia'
-import { generateImage, type ImageGenerationOptions } from './image-gen-simple'
+import { isBriefExplanationQuery, generateBriefExplanation, formatBriefExplanationResponse } from './brief_explainer'
+import { isGreetingOrSmallTalk, generateGreetingResponse, recordGreetingHandled } from './greeting_agent'
 import type { Pinecone } from "@pinecone-database/pinecone"
 import axios from "axios"
-import { GreetingAgent } from './agents/greeting_agent'
 import crypto from "crypto"
-import ProfessionalResponseFormatter from './professional-formatter'
-import Database from 'better-sqlite3'
-import path from 'path'
-
-// Initialize Agents
-const greetingAgent = new GreetingAgent()
-
 
 // ==================== TYPE DEFINITIONS ====================
 
@@ -157,7 +148,6 @@ interface ApiResponse {
     totalTokensUsed?: number
     rateLimitReset?: number
     cacheHit?: boolean
-    imageData?: string // Base64 image data for image generation
   }
 }
 
@@ -170,7 +160,6 @@ declare global {
   var voiceSessionStorage: Map<string, ConversationSession>
   var apiRateLimiter: Map<string, RateLimitData>
   var responseCache: Map<string, { response: ApiResponse; timestamp: number }>
-  var lruCache: any // LRU Cache instance
 }
 
 const defaultCapabilities: Capabilities = {
@@ -205,7 +194,7 @@ const CONFIG = {
   MAX_MESSAGE_LENGTH: 1000,
   MAX_CONTEXT_HISTORY: 10,
   RAG_TOP_K: 8,
-  LLM_MAX_TOKENS: 1500,  // Increased from 800 to allow comprehensive responses
+  LLM_MAX_TOKENS: 2048,  // Increased from 1500 to allow comprehensive responses
   LLM_TEMPERATURE: 0.7,   // Increased from 0.2 for more natural, conversational responses
   WEB_SEARCH_TIMEOUT: 8000,
   MEDICAL_API_TIMEOUT: 10000,
@@ -375,145 +364,32 @@ function blockUser(userId: string, durationMs: number = 60000): void {
   }
 }
 
-// ==================== CACHING WITH LRU (Least Recently Used) ====================
-
-/**
- * LRU Cache Node for doubly linked list
- */
-interface LRUNode {
-  key: string
-  value: { response: ApiResponse; timestamp: number }
-  prev: LRUNode | null
-  next: LRUNode | null
-}
-
-/**
- * Efficient LRU Cache implementation
- * Time Complexity: O(1) for get and set operations
- * Space Complexity: O(n) where n is cache size
- */
-class LRUCache {
-  private capacity: number
-  private cache: Map<string, LRUNode>
-  private head: LRUNode | null = null
-  private tail: LRUNode | null = null
-
-  constructor(capacity: number = 100) {
-    this.capacity = capacity
-    this.cache = new Map()
-  }
-
-  private moveToFront(node: LRUNode): void {
-    if (node === this.head) return
-
-    // Remove from current position
-    if (node.prev) node.prev.next = node.next
-    if (node.next) node.next.prev = node.prev
-    if (node === this.tail) this.tail = node.prev
-
-    // Move to front
-    node.next = this.head
-    node.prev = null
-    if (this.head) this.head.prev = node
-    this.head = node
-    if (!this.tail) this.tail = node
-  }
-
-  private removeTail(): void {
-    if (!this.tail) return
-
-    this.cache.delete(this.tail.key)
-
-    if (this.tail.prev) {
-      this.tail.prev.next = null
-      this.tail = this.tail.prev
-    } else {
-      this.head = null
-      this.tail = null
-    }
-  }
-
-  get(key: string, ttl: number): ApiResponse | null {
-    const node = this.cache.get(key)
-    if (!node) return null
-
-    // Check TTL
-    if (Date.now() - node.value.timestamp >= ttl) {
-      this.delete(key)
-      return null
-    }
-
-    // Move to front (most recently used)
-    this.moveToFront(node)
-    console.log('✅ LRU Cache hit!')
-    return { ...node.value.response, metadata: { ...node.value.response.metadata, cacheHit: true } }
-  }
-
-  set(key: string, response: ApiResponse): void {
-    // If key exists, update and move to front
-    const existingNode = this.cache.get(key)
-    if (existingNode) {
-      existingNode.value = { response: { ...response }, timestamp: Date.now() }
-      this.moveToFront(existingNode)
-      return
-    }
-
-    // Create new node
-    const newNode: LRUNode = {
-      key,
-      value: { response: { ...response }, timestamp: Date.now() },
-      prev: null,
-      next: this.head
-    }
-
-    // Add to cache
-    this.cache.set(key, newNode)
-
-    // Update head
-    if (this.head) this.head.prev = newNode
-    this.head = newNode
-    if (!this.tail) this.tail = newNode
-
-    // Evict least recently used if over capacity
-    if (this.cache.size > this.capacity) {
-      this.removeTail()
-    }
-  }
-
-  delete(key: string): void {
-    const node = this.cache.get(key)
-    if (!node) return
-
-    if (node.prev) node.prev.next = node.next
-    if (node.next) node.next.prev = node.prev
-    if (node === this.head) this.head = node.next
-    if (node === this.tail) this.tail = node.prev
-
-    this.cache.delete(key)
-  }
-
-  size(): number {
-    return this.cache.size
-  }
-
-  clear(): void {
-    this.cache.clear()
-    this.head = null
-    this.tail = null
-  }
-}
-
-// Initialize LRU cache
-if (!global.lruCache) {
-  global.lruCache = new LRUCache(100)
-}
+// ==================== CACHING ====================
 
 function getCachedResponse(cacheKey: string): ApiResponse | null {
-  return global.lruCache?.get(cacheKey, CONFIG.CACHE_TTL) || null
+  const cached = global.responseCache?.get(cacheKey)
+  if (cached && Date.now() - cached.timestamp < CONFIG.CACHE_TTL) {
+    console.log('✅ Cache hit!')
+    return { ...cached.response, metadata: { ...cached.response.metadata, cacheHit: true } }
+  }
+  if (cached) {
+    global.responseCache?.delete(cacheKey)
+  }
+  return null
 }
 
 function setCachedResponse(cacheKey: string, response: ApiResponse): void {
-  global.lruCache?.set(cacheKey, response)
+  global.responseCache?.set(cacheKey, {
+    response: { ...response },
+    timestamp: Date.now()
+  })
+
+  if (global.responseCache && global.responseCache.size > 100) {
+    const firstKey = global.responseCache.keys().next().value
+    if (firstKey) {
+      global.responseCache.delete(firstKey)
+    }
+  }
 }
 
 // ==================== PINECONE RAG SYSTEM ====================
@@ -722,98 +598,6 @@ async function enhancedRAGSearch(
       searchQuery: query,
       processingTime: Date.now() - startTime
     }
-  }
-}
-
-// ==================== QUERY TYPE CLASSIFICATION ====================
-
-/**
- * Classifies query type to optimize model selection and processing
- * Query type	What to run
- * - Greeting / small talk → Tiny model, no RAG, no CoT
- * - Simple Q&A → Medium model, no RAG
- * - Knowledge question → RAG + embeddings
- * - Complex reasoning → RAG + CoT + large model
- */
-function classifyQueryType(message: string): {
-  type: 'greeting' | 'simple' | 'knowledge' | 'complex'
-  useRAG: boolean
-  useCoT: boolean
-  modelSize: 'tiny' | 'medium' | 'large'
-  reasoning: string
-} {
-  const lowerMessage = message.toLowerCase().trim()
-  const wordCount = message.split(/\s+/).length
-
-  // 1. GREETING / SMALL TALK - Tiny model, no RAG, no CoT
-  const greetingPatterns = /^(hi|hello|hey|good\s+(morning|afternoon|evening|night)|what'?s\s+up|howdy|greetings|yo|sup)[\s!?.]*$/i
-  const smallTalkPatterns = /^(how\s+are\s+you|how'?s\s+it\s+going|nice\s+to\s+meet|thanks?|thank\s+you|bye|goodbye|see\s+you|ok|okay|cool|great|awesome|nice)[\s!?.]*$/i
-
-  if (greetingPatterns.test(lowerMessage) || smallTalkPatterns.test(lowerMessage)) {
-    return {
-      type: 'greeting',
-      useRAG: false,
-      useCoT: false,
-      modelSize: 'tiny',
-      reasoning: 'Simple greeting or small talk - using fast tiny model'
-    }
-  }
-
-  // 2. SIMPLE Q&A - Medium model, no RAG (for factual questions that don't need knowledge base)
-  const simpleQuestionPatterns = /^(what\s+is|who\s+is|when\s+is|where\s+is|define|meaning\s+of|tell\s+me\s+about)\s+\w+[\s\w]{0,20}[?.]?$/i
-  const isShortQuestion = wordCount <= 8 && /\?$/.test(message)
-  const noComplexKeywords = !/compare|analyze|explain\s+why|how\s+does|reasoning|because|therefore|complex|detailed/i.test(message)
-
-  if ((simpleQuestionPatterns.test(lowerMessage) || isShortQuestion) && noComplexKeywords) {
-    return {
-      type: 'simple',
-      useRAG: false,
-      useCoT: false,
-      modelSize: 'medium',
-      reasoning: 'Simple factual question - using medium model without RAG'
-    }
-  }
-
-  // 3. KNOWLEDGE QUESTION - RAG + embeddings (needs knowledge base lookup)
-  const knowledgePatterns = /\b(research|study|paper|article|documentation|reference|source|citation|history\s+of|background\s+on|information\s+about)\b/i
-  const specificTopicPatterns = /\b(medical|scientific|technical|historical|academic|scholarly)\b/i
-  const needsContext = /\b(in\s+context|according\s+to|based\s+on|references?|sources?)\b/i
-
-  if (knowledgePatterns.test(lowerMessage) || specificTopicPatterns.test(lowerMessage) || needsContext.test(lowerMessage)) {
-    return {
-      type: 'knowledge',
-      useRAG: true,
-      useCoT: false,
-      modelSize: 'medium',
-      reasoning: 'Knowledge-based query - using RAG with embeddings'
-    }
-  }
-
-  // 4. COMPLEX REASONING - RAG + CoT + large model
-  const complexPatterns = /\b(why|how\s+does|explain|analyze|compare|evaluate|assess|reasoning|logic|prove|demonstrate|argue|justify)\b/i
-  const multiPartQuestion = message.split('?').length > 1 || /\band\b.*\?/.test(message)
-  const requiresInference = /\b(therefore|thus|hence|consequently|implies|suggests|indicates|means\s+that)\b/i
-  const requiresCalculation = /\b(calculate|compute|solve|equation|formula|algorithm|optimize)\b/i
-  const isLongQuery = wordCount > 15
-
-  if (complexPatterns.test(lowerMessage) || multiPartQuestion || requiresInference.test(lowerMessage) ||
-    requiresCalculation.test(lowerMessage) || isLongQuery) {
-    return {
-      type: 'complex',
-      useRAG: true,
-      useCoT: true,
-      modelSize: 'large',
-      reasoning: 'Complex reasoning required - using full RAG + CoT + large model'
-    }
-  }
-
-  // DEFAULT: Treat as knowledge question (safer default)
-  return {
-    type: 'knowledge',
-    useRAG: true,
-    useCoT: false,
-    modelSize: 'medium',
-    reasoning: 'Default classification - using RAG with medium model'
   }
 }
 
@@ -1113,7 +897,7 @@ function executeChainOfThought(
     step: 10,
     thought: "Predicting response quality and identifying potential gaps",
     action: "predict_quality",
-    result: `Expected quality: ${qualityPrediction.score}/10 | Confidence: ${qualityPrediction.confidence} | Gaps: ${qualityPrediction.gaps.join(', ') || 'None'}`,
+    result: `Expected quality: ${qualityPrediction.score}/10 | Gaps: ${qualityPrediction.gaps.join(', ') || 'None'}`,
     confidence: qualityPrediction.confidence
   })
 
@@ -1129,7 +913,7 @@ function executeChainOfThought(
 function analyzeIntent(message: string): string {
   const lowerMessage = message.toLowerCase()
 
-  if (/\b(what|how|why|when|where|who|explain|describe|discuss|detail|about)\b/.test(lowerMessage)) return "information_seeking"
+  if (/\b(what|how|why|when|where|who)\b/.test(lowerMessage)) return "information_seeking"
   if (/\b(help|assist|support)\b/.test(lowerMessage)) return "help_request"
   if (/\b(hello|hi|hey|greet)\b/.test(lowerMessage)) return "greeting"
   if (/\b(thank|thanks|appreciate)\b/.test(lowerMessage)) return "gratitude"
@@ -1154,8 +938,7 @@ function determineResponseStrategy(
 
 function generateFinalReasoning(steps: ChainOfThoughtStep[], ragResults: RAGResult): string {
   return `Based on ${steps.length}-step analysis: ${steps[steps.length - 1].result}. ` +
-    `Knowledge base provided ${ragResults.entries.length} relevant sources. ` +
-    `Confidence level: ${(steps.reduce((sum, s) => sum + s.confidence, 0) / steps.length * 100).toFixed(1)}%`
+    `Knowledge base provided ${ragResults.entries.length} relevant sources.`
 }
 
 // ==================== WEB SEARCH ====================
@@ -1257,12 +1040,15 @@ async function callEnhancedLlamaWithCoTAndRAG(
 
   if (['greeting', 'farewell', 'gratitude'].includes(queryType)) {
     lengthGuideline = 'CRITICAL: Keep response to 1-2 sentences maximum. Be warm but brief.'
+  } else if (/explain|what is|how (to|do)|describe|tell me about|why/i.test(userMessage) && !isBriefExplanationQuery(userMessage)) {
+    // Explicit explanation request (NOT brief) -> Detailed response
+    lengthGuideline = 'Provide a CLEAR, DETAILED, and COMPREHENSIVE explanation. Use multiple paragraphs and bullet points if helpful. Aim for depth.'
   } else if (queryType === 'general_conversation' && userMessage.split(' ').length < 5) {
-    lengthGuideline = 'Provide a helpful response. It does not need to be extremely long, but should cover the topic well (3-5 sentences).'
+    lengthGuideline = 'Keep response concise: 2-3 sentences maximum.'
   } else if (['information_seeking', 'current_information', 'medical_query'].includes(queryType)) {
     lengthGuideline = 'Provide detailed, comprehensive response (3-5 paragraphs if needed).'
   } else {
-    lengthGuideline = 'Provide a well-rounded and detailed response. Do not artificially limit length if the topic requires explanation.'
+    lengthGuideline = 'Provide a helpful response. Be detailed if the topic requires it, otherwise moderate length.'
   }
 
   const enhancedPrompt = `You are an advanced AI assistant using Chain of Thought reasoning and knowledge retrieval.
@@ -1288,15 +1074,13 @@ ${lengthGuideline}
 
 INSTRUCTIONS:
 1. Provide a helpful, accurate, and conversational response
-2. **REFERENCE CHECK**: "RELEVANT KNOWLEDGE" above contains matching answers from our knowledge base (Pinecone/SQLite).
-   - Use them as a **REFERENCE** for style, context, and depth.
-   - **DO NOT** simply copy-paste them if they contain outdated information (e.g., old dates, prices, weather, versions).
-   - **UPDATE** any outdated facts using the "CURRENT INFORMATION" section if available.
+2. If the knowledge above is relevant, reference and build upon it naturally
 3. Be engaging and personable - avoid robotic responses
 4. STRICTLY follow the length requirement above - do not be overly verbose
 5. If information might be incomplete, acknowledge it honestly
 6. Match the user's expertise level and tone
-7. Use markdown formatting for better readability when appropriate
+7. Use markdown formatting for better readability when appropriate, but AVOID headers (#) and underlines (===)
+8. Format responses professionally: use bolding for emphasis, but keep structure simple
 
 Response:`
 
@@ -1324,23 +1108,34 @@ Response:`
         text = text.replace(regex, '')
       }
 
+      // Cleanup unprofessional formatting
+      text = text
+        .replace(/^#+\s+/gm, '') // Remove headers (# Header)
+        .replace(/^[=\-]{3,}/gm, '') // Remove underlines (===, ---)
+        .replace(/\*\*[^*]+\*\*\n[=\-]{3,}/g, '$1') // Remove underline after bold header
+        .trim()
+
       text = text.trim()
 
       // Smart length enforcement based on query type
       const queryType = analyzeIntent(userMessage)
       let maxLength = 0
 
-      if (['greeting', 'farewell', 'gratitude'].includes(queryType)) {
-        maxLength = 250  // ~2-3 sentences (Relaxed)
-      } else if (queryType === 'general_conversation' && userMessage.split(' ').length < 5) {
-        maxLength = 1500  // Increased to allow better explanations even for short queries
-      } else if (['information_seeking', 'current_information', 'medical_query'].includes(queryType)) {
-        maxLength = 4000  /* Allow very detailed responses */
+      // Check for list requests or specific counts which need more space
+      const isListRequest = /\b(list|top|best|steps|ways|reasons|examples)\b/i.test(userMessage) ||
+        /\d+/.test(userMessage) // Contain numbers like "10 animes"
+
+      if (['greeting', 'farewell', 'gratitude'].includes(queryType) && !isListRequest) {
+        maxLength = 200  // Keep greetings short
+      } else if (queryType === 'general_conversation' && userMessage.split(' ').length < 5 && !isListRequest) {
+        maxLength = 800  // increased from 300
+      } else if (['information_seeking', 'current_information', 'medical_query'].includes(queryType) || isListRequest) {
+        maxLength = 5000  // Allow very detailed responses (was 2000)
       } else {
-        maxLength = 1500 /* Generous default (~10 sentences) */
+        maxLength = 3000  // Generous default (was 600)
       }
 
-      // Only truncate if significantly over limit (allow some flexibility)
+      // Only truncate if significantly over limit
       if (text.length > maxLength * 1.2) {
         // Find last complete sentence within limit
         const truncated = text.substring(0, maxLength)
@@ -1349,9 +1144,10 @@ Response:`
         const lastExclamation = truncated.lastIndexOf('!')
         const lastSentenceEnd = Math.max(lastPeriod, lastQuestion, lastExclamation)
 
-        if (lastSentenceEnd > maxLength * 0.7) {
+        if (lastSentenceEnd > maxLength * 0.8) { // increased completion threshold
           text = text.substring(0, lastSentenceEnd + 1).trim()
         } else {
+          // If we can't find a good sentence break, just use the hard limit but add ellipsis
           text = truncated.trim() + '...'
         }
       }
@@ -1637,98 +1433,20 @@ function calculateImportance(message: string, sentimentAnalysis: any): number {
   return Math.min(1.0, importance)
 }
 
-// ==================== WIKIPEDIA QUERY HANDLER ====================
-
-async function handleWikipediaQuery(
-  message: string,
-  userPlan: string = 'Free'
-): Promise<{
-  response: string
-  ragResults?: any
-  cotSteps?: string[]
-}> {
-  console.log(`📚 Processing Wikipedia query (${userPlan} plan)...`)
-
-  try {
-    const isPro = userPlan === 'Pro' || userPlan === 'Enterprise'
-
-    // Pro users get more detailed results
-    const sentences = isPro ? 10 : 5
-
-    const wikiResult = await quickWikipediaLookup(message, sentences, isPro)
-    const formattedResponse = formatWikipediaResponse(wikiResult)
-
-    // Create CoT steps for Wikipedia search
-    const cotSteps = [
-      'Classified query as Wikipedia search',
-      `User plan: ${userPlan}`,
-      isPro ? 'Enhanced search with Pro features' : 'Standard search',
-      wikiResult.success ? `Found: ${wikiResult.title}` : 'No results found'
-    ]
-
-    if (wikiResult.relatedTopics && wikiResult.relatedTopics.length > 0) {
-      cotSteps.push(`Related topics: ${wikiResult.relatedTopics.join(', ')}`)
-    }
-
-    console.log(`✅ Wikipedia query processed (${userPlan}): ${wikiResult.success ? 'Success' : 'Failed'}`)
-
-    return {
-      response: formattedResponse,
-      ragResults: {
-        entries: wikiResult.success ? [{
-          id: 'wikipedia_result',
-          content: wikiResult.summary || '',
-          category: 'wikipedia',
-          timestamp: new Date(),
-          tags: ['wikipedia', 'knowledge'],
-          priority: 'medium' as const,
-          relevanceScore: 0.9,
-          accessCount: 0,
-          lastAccessed: new Date()
-        }] : [],
-        totalRelevance: wikiResult.success ? 0.9 : 0,
-        categories: ['wikipedia'],
-        searchQuery: message,
-        processingTime: 0
-      },
-      cotSteps
-    }
-  } catch (error) {
-    console.error('❌ Wikipedia query processing failed:', error)
-
-    return {
-      response: `I encountered an error searching Wikipedia. Please try rephrasing your query or try again later.`,
-      ragResults: {
-        entries: [],
-        totalRelevance: 0,
-        categories: [],
-        searchQuery: message,
-        processingTime: 0
-      },
-      cotSteps: ['Wikipedia query processing failed', 'Returned fallback response']
-    }
-  }
-}
-
 // ==================== MEDICAL QUERY HANDLER ====================
 
-async function handleMedicalQuery(
-  message: string,
-  userPlan: string = 'Free'
-): Promise<{
+async function handleMedicalQuery(message: string): Promise<{
   response: string
   ragResults?: any
   cotSteps?: string[]
 }> {
-  console.log(`🏥 Processing medical query with Meditron (${userPlan} plan)...`)
+  console.log('🏥 Processing medical query with Llama 3...')
 
   try {
     const medicalResponse = await searchMedical(message, {
       model: 'llama3',
       temperature: 0.3, // Low temperature for medical accuracy
-      includeRelated: true,
-      useMeditron: true, // Enable Meditron
-      userPlan: userPlan as 'Free' | 'Pro' | 'Enterprise'
+      includeRelated: true
     })
 
     // Format the response with disclaimer
@@ -1737,9 +1455,6 @@ async function handleMedicalQuery(
     // Create CoT steps for medical reasoning
     const cotSteps = [
       'Classified query as medical',
-      `User plan: ${userPlan}`,
-      `Model: ${medicalResponse.sources[1]}`, // AI Model info
-      `Confidence: ${(medicalResponse.confidence * 100).toFixed(0)}%`,
       `Sources: ${medicalResponse.sources.join(', ')}`
     ]
 
@@ -1747,7 +1462,7 @@ async function handleMedicalQuery(
       cotSteps.push(`Related topics: ${medicalResponse.relatedTopics.join(', ')}`)
     }
 
-    console.log(`✅ Medical query processed with ${(medicalResponse.confidence * 100).toFixed(1)}% confidence`)
+    console.log(`✅ Medical query processed with ${medicalResponse.confidence.toFixed(2)} confidence`)
 
     return {
       response: formattedResponse,
@@ -1757,7 +1472,7 @@ async function handleMedicalQuery(
           content: source,
           category: 'medical',
           timestamp: new Date(),
-          tags: ['medical', 'meditron'],
+          tags: ['medical', 'llama3'],
           priority: 'high' as const,
           relevanceScore: medicalResponse.confidence,
           accessCount: 0,
@@ -1935,373 +1650,164 @@ async function processEnhancedUserMessage(
     const sentimentAnalysis = enhancedSentimentAnalysis(message)
     conversationContext.userMood = sentimentAnalysis.sentiment
 
-    // ==================================================================================
-    // 🧠 MULTI-AGENT ORCHESTRATOR
-    // Architecture: Divide & Conquer
-    // 1. Break message into segments/intents
-    // 2. Route each segment to specialized agent (Greeting, Image, Medical, Reasoning)
-    // 3. Aggregate results into cohesive response
-    // ==================================================================================
+    // ==================== GREETING AGENT (FIRST PRIORITY) ====================
+    // Handle greetings and small talk efficiently without LLM overhead
+    if (isGreetingOrSmallTalk(message)) {
+      console.log('👋 Greeting/small talk detected - using lightweight greeting agent')
+      const greetingResponse = generateGreetingResponse(message)
 
-    let workingMessage = message;
-    const responseSegments: string[] = [];
-    let sources: string[] = [];
-    let providerUsed = 'orchestrator';
-    let reasoningTrace: string[] = [];
+      if (greetingResponse) {
+        recordGreetingHandled()
+        updateConversationHistory(message, sentimentAnalysis)
 
-    // --- AGENT 1: GREETING AGENT ---
-    // Handles Intro/Outro/Social protocols
-    const greetingCheck = greetingAgent.stripGreeting(workingMessage);
-    if (greetingCheck.hasGreeting) {
-      console.log('✨ Agent [Greeting]: Activated');
+        return createDefaultResponse({
+          success: true,
+          response: greetingResponse,
+          source: 'greeting_agent',
+          metadata: {
+            responseTime: Date.now() - startTime,
+            provider: 'greeting_agent',
+            confidence: 1.0
+          },
+          suggestion: "Feel free to ask about any topic, get explanations, or just chat!"
+        })
+      }
+    }
 
-      const hour = new Date().getHours();
-      let timeOfDay = 'morning';
-      if (hour >= 5 && hour < 12) timeOfDay = 'morning';
-      else if (hour >= 12 && hour < 17) timeOfDay = 'afternoon';
-      else if (hour >= 17 && hour < 22) timeOfDay = 'evening';
-      else timeOfDay = 'night'; // 10 PM to 5 AM
+    try {
+      const jsonResult = await searchTrainedDataLegacy(message)
+      if (jsonResult.found) {
+        console.log('📄 Found in trained data')
+        updateConversationHistory(message, sentimentAnalysis)
+        return createEnhancedResponse(jsonResult.response!, 'trained_data', startTime)
+      }
+    } catch (error) {
+      console.log('📄 Trained data search unavailable, continuing with AI processing')
+    }
 
-      // Pass the ACTUAL greeting part to the agent (not hardcoded "hello")
-      // This allows the trained model to classify: greeting vs farewell vs thanks
-      const greetingResult = greetingAgent.generateResponse(greetingCheck.greetingPart, {
-        userName: conversationContext.userName,
-        userMood: sentimentAnalysis.sentiment,
-        timeOfDay: timeOfDay
-      });
+    if (/my name is|call me/i.test(message)) {
+      const nameMatch = message.match(/(?:my name is|call me)\s+([a-zA-Z]+)/i)
+      if (nameMatch) {
+        global.userData.userName = nameMatch[1]
+        conversationContext.userName = nameMatch[1]
+        updateConversationHistory(message, sentimentAnalysis)
 
-      // We accumulate the greeting but DON'T output it yet. 
-      // We will prepend it to the final response.
-      responseSegments.push(greetingResult.response.split(/[!.?]/)[0] + "!");
-
-      // CRITICAL: Remove greeting from working message so LLM doesn't see it (Token Savings)
-      workingMessage = greetingCheck.cleanMessage;
-
-      if (!workingMessage) {
-        // If ONLY a greeting, return immediately (Short Circuit)
-        updateConversationHistory(message, sentimentAnalysis);
         return createEnhancedResponse(
-          greetingResult.response,
-          'greeting_agent',
-          startTime,
-          0,
-          greetingResult.reasoning
-        );
+          `Nice to meet you, ${nameMatch[1]}! 👋 I'm your enhanced AI assistant with advanced reasoning capabilities. How can I help you today?`,
+          'name_introduction',
+          startTime
+        )
       }
     }
 
-    // --- AGENT 2: IMAGE AGENT ---
-    // Handles visual generation requests
-    const imageMode = detectModeFromMessage(workingMessage) === 'image';
-    if (imageMode) {
-      console.log('✨ Agent [Image]: Activated');
-      const userPlan = 'Free';
-      const imageResult = await handleImageGeneration(workingMessage, userPlan);
-
-      // Add image description to response
-      responseSegments.push(imageResult.response);
-
-      // Append image metadata to response artifact
-      // (Note: In a real split, we might want to return the image separately, 
-      // but here we just append the text confirmation)
-      sources.push('image_gen');
-
-      // Stop processing text if it was primarily an image request
-      // (Unless complex multi-modal, but for now specific)
-      updateConversationHistory(message, sentimentAnalysis);
-
-      const finalResp = createEnhancedResponse(
-        responseSegments.join("\n\n"),
-        'image_generation',
-        startTime,
-        imageResult.ragResults,
-        imageResult.cotSteps
-      );
-      if (imageResult.imageData) {
-        finalResp.metadata = { ...finalResp.metadata, imageData: imageResult.imageData };
-      }
-      return finalResp;
-    }
-
-    // --- AGENT 3: SPECIALIZED KNOWLEDGE AGENTS (Medical/Trained) ---
-    if (/pain|hurt|sick|symptom|medical|health|doctor/i.test(workingMessage)) {
-      console.log('✨ Agent [Medical]: Activated');
-      const medicalRes = await handleMedicalQuery(workingMessage, 'Free');
-      responseSegments.push(medicalRes.response);
-      sources.push('medical_agent');
-
-      updateConversationHistory(message, sentimentAnalysis);
-      return createEnhancedResponse(
-        responseSegments.join("\n\n"),
-        'medical_agent',
-        startTime,
-        medicalRes.ragResults
-      );
-    }
-
-    // --- AGENT 4: REASONING AGENT (LLM) ---
-    // Handles whatever is left (General Logic)
-    if (workingMessage.length > 1) { // Ensure actual content remains
-      console.log('✨ Agent [Reasoning]: Activated for payload:', workingMessage);
+    // Check for brief explanation queries
+    if (isBriefExplanationQuery(message)) {
+      console.log('📝 Brief explanation query detected')
+      updateConversationHistory(message, sentimentAnalysis)
 
       try {
-        // ==================================================================================
-        // 🎓 CONSENSUS ENGINE (Student-Teacher Learning Loop)
-        // 1. Get Student Answer (Fine-Tuned Model)
-        // 2. Get Teacher Answer (Main LLM)
-        // 3. Review & Synthesize (Reviewer)
-        // 4. Log for Retraining
-        // ==================================================================================
+        const briefExplanation = await generateBriefExplanation(
+          message,
+          isProviderConfigured() ? generateWithProvider : undefined
+        )
 
-        // 1. Student Model (The one being trained)
-        let studentResponse = null;
-        try {
-          // Try to call the fine-tuned model
-          const studentResult = await generateWithProvider(workingMessage, {
-            model: 'g-one-v1-mistral', // The name of your fine-tuned model
-            temperature: 0.7,
-            maxTokens: 500,
-            systemPrompt: "You are G-One, a helpful AI assistant."
-          });
-          studentResponse = studentResult.text;
-          console.log("👨‍🎓 Student Model Responded");
-        } catch (e) {
-          console.log("⚠️ Student Model unavailable (skipping):", (e as any).message);
-        }
+        const formattedResponse = formatBriefExplanationResponse(briefExplanation)
 
-        // 2. Teacher Model (The current production LLM) - via existing CoT function
-        const teacherResult = await callEnhancedLlamaWithCoTAndRAG(workingMessage, conversationContext, userId);
-        const teacherResponse = teacherResult.response;
-
-        // 3. Greeting Agent Result (if any)
-        const greetingResponse = responseSegments.length > 0 ? responseSegments[0] : null;
-
-        // 4. Consensus / Review Step
-        let finalAnswer = teacherResponse;
-
-        // Only run consensus if we actually have a student response to compare/merge
-        if (studentResponse && studentResponse !== 'N/A') {
-          console.log("⚖️ Consensus Engine: Reviewing responses...");
-
-          const reviewPrompt = `You are a Senior AI Validator. Your goal is to synthesize the PERFECT response for the user.
-          
-  User Query: "${workingMessage}"
-
-  [INPUT 1] Greeting Agent (Social): "${greetingResponse || 'N/A'}"
-  [INPUT 2] Student Model (Local Fine-Tuned): "${studentResponse}"
-  [INPUT 3] Teacher Model (Reasoning/RAG): "${teacherResponse}"
-
-  INSTRUCTIONS:
-  1. "Teacher Model" is usually the most accurate. Use it as the base.
-  2. If "Student Model" gives a good answer, acknowledge it implicitly (continuous learning).
-  3. If "Greeting Agent" provided a greeting, ensure the final answer flows naturally from it (or doesn't repeat it).
-  4. Combine the best parts into a single, cohesive, professional response.
-  5. The final output MUST be the direct answer to the user. No "Here is the synthesized answer:" prefixes.
-
-  Final Response:`;
-
-          const consensusResult = await generateWithProvider(reviewPrompt, {
-            temperature: 0.5,
-            maxTokens: 1000
-          });
-          finalAnswer = consensusResult.text.trim();
-        } else {
-          console.log("⏩ Consensus skipped (Student Model silent), using Teacher response directly.");
-        }
-
-        // 5. Log for Continuous Learning (The Critical Step)
-        // Detect Mistake: If Student spoke but was different from Final, record it as a "Mistake" to learn from.
-        let rejectedResponse = null;
-        if (studentResponse && studentResponse.length > 10) {
-          // Simple similarity check could go here, but for now, we assume if Consensus changed it, it's better.
-          // We only log as rejected if they are substantially different to avoid noise.
-          if (finalAnswer.slice(0, 50) !== studentResponse.slice(0, 50)) {
-            rejectedResponse = studentResponse;
-            console.log("👨‍🏫 Teacher corrected Student's mistake. Logging for DPO/Correction.");
-          }
-        }
-
-        logToLearningDB(workingMessage, finalAnswer, 0.95, rejectedResponse);
-
-        responseSegments.push(finalAnswer);
-        sources = [...sources, ...teacherResult.sources, 'consensus_engine'];
-        providerUsed = 'consensus_v1';
-        reasoningTrace = teacherResult.cotProcess ? teacherResult.cotProcess.steps.map(s => s.thought) : [];
-
-      } catch (err) {
-        console.error('Reasoning Agent Failed:', err);
-        responseSegments.push("I encountered a logic error processing your request.");
+        return createDefaultResponse({
+          success: true,
+          response: formattedResponse,
+          source: 'brief_explainer',
+          metadata: {
+            model: process.env.LLM_MODEL,
+            responseTime: Date.now() - startTime,
+            confidence: briefExplanation.confidence,
+            sources: briefExplanation.success ? ['llm', 'wikipedia'] : ['llm'],
+            provider: isProviderConfigured() ? (process.env.LLM_PROVIDER || 'configured') : 'fallback'
+          },
+          suggestion: generateContextualSuggestion(sentimentAnalysis, conversationContext)
+        })
+      } catch (error) {
+        console.warn('⚠️ Brief explanation failed, falling back to normal processing:', error)
+        // Continue to normal AI processing if brief explanation fails
       }
     }
 
-    // ==================================================================================
-    // 🧩 SYNTHESIS
-    // Combine all agent outputs into the final coherent response
-    // ==================================================================================
 
-    updateConversationHistory(message, sentimentAnalysis);
+    if (/pain|hurt|sick|symptom|medical|health|doctor/i.test(message)) {
+      console.log('🏥 Medical query detected')
+      updateConversationHistory(message, sentimentAnalysis)
 
-    // Polish: Check if Reasoning Agent added a greeting despite being told not to (LLMs are chatty)
-    if (responseSegments.length > 1) {
-      // If we have a Greeting Agent segment AND a Reasoning segment
-      const greetingSegment = responseSegments[0];
-      let mainBody = responseSegments[responseSegments.length - 1];
-
-      // Simple heuristic: If main body starts with "Hello", "Hi", "Greetings", strip it
-      // to avoid "Good Morning! Hello, gravity is..."
-      const redundancyCheck = /^(hello|hi|good\s+(morning|afternoon|evening)|greetings|hey)\b/i;
-      if (redundancyCheck.test(mainBody.substring(0, 20))) {
-        mainBody = mainBody.replace(redundancyCheck, '').replace(/^[,!.]\s*/, '');
-        // Capitalize first letter of new start
-        mainBody = mainBody.charAt(0).toUpperCase() + mainBody.slice(1);
-        responseSegments[responseSegments.length - 1] = mainBody;
-      }
+      const medicalResponse = await handleMedicalQuery(message)
+      return createEnhancedResponse(
+        medicalResponse.response,
+        'medical_agent',
+        startTime,
+        medicalResponse.ragResults,
+        medicalResponse.cotSteps
+      )
     }
 
-    const finalResponseText = responseSegments.join("\n\n");
+    try {
+      console.log('🤖 Starting enhanced AI processing...')
+      const aiResponse = await callEnhancedLlamaWithCoTAndRAG(message, conversationContext, userId)
 
-    return createDefaultResponse({
-      success: true,
-      response: finalResponseText,
-      source: providerUsed,
-      metadata: {
-        model: process.env.LLM_MODEL || 'orchestrator-ensemble',
-        responseTime: Date.now() - startTime,
-        sources: sources,
-        cotSteps: reasoningTrace,
-        ragResults: 0 // Aggregated in real implementation
-      },
-      suggestion: generateContextualSuggestion(sentimentAnalysis, conversationContext)
-    });
+      updateConversationHistory(message, sentimentAnalysis)
+
+      const providerRetryAfterSeconds = (aiResponse as any)?.providerRetryAfterSeconds ?? null
+      const providerErrorMessage = (aiResponse as any)?.providerErrorMessage ?? null
+
+      return createDefaultResponse({
+        success: true,
+        response: aiResponse.response,
+        source: 'enhanced_ai',
+        metadata: {
+          model: process.env.LLAMA_MODEL || process.env.LLM_MODEL ||
+            (aiResponse.provider === 'openai' ? process.env.OPENAI_MODEL : undefined) ||
+            'meta-llama/Llama-3-70b-chat-hf',
+          provider: aiResponse.provider ||
+            (process.env.LLM_PROVIDER ||
+              (process.env.OPENAI_API_KEY ? 'openai' :
+                (process.env.LLAMA_API_KEY ? 'llama' :
+                  (process.env.GEMINI_API_KEY ? 'gemini' : 'none')))),
+          responseTime: Date.now() - startTime,
+          reasoning: aiResponse.reasoning,
+          sources: aiResponse.sources,
+          ragResults: aiResponse.ragResults.entries.length,
+          cotSteps: aiResponse.cotProcess.steps.map(step => `Step ${step.step}: ${step.thought}`),
+          confidence: aiResponse.confidence,
+          ...(providerRetryAfterSeconds ? { providerRetryAfterSeconds } : {}),
+          ...(providerErrorMessage ? { providerErrorMessage } : {})
+        },
+        suggestion: generateContextualSuggestion(sentimentAnalysis, conversationContext)
+      })
+
+    } catch (aiError) {
+      console.error('🚫 Enhanced AI processing failed:', aiError)
+
+      const fallbackResponse = generateFallbackResponse(message, sentimentAnalysis)
+      updateConversationHistory(message, sentimentAnalysis)
+
+      return createEnhancedResponse(fallbackResponse, 'fallback', startTime)
+    }
 
   } catch (error) {
-    console.error('💥 Orchestrator failed:', error)
+    console.error('💥 Message processing failed:', error)
     return createDefaultResponse({
       success: false,
       error: error instanceof Error ? error.message : 'Unknown error',
-      response: "I apologize, but I encountered an issue processing your message.",
-      metadata: { responseTime: Date.now() - startTime }
+      response: "I apologize, but I encountered an issue processing your message. Please try again.",
+      suggestion: "Try rephrasing your question or ask about a different topic.",
+      metadata: {
+        responseTime: Date.now() - startTime
+      }
     })
   }
-}
-
-// ==================== IMAGE GENERATION HANDLER ====================
-
-async function handleImageGeneration(
-  message: string,
-  userPlan: string = 'Free'
-): Promise<{
-  response: string
-  imageData?: string
-  ragResults?: any
-  cotSteps?: string[]
-}> {
-  console.log(`🎨 Processing image generation request (${userPlan} plan)...`)
-
-  try {
-    // Extract prompt from message
-    const promptMatch = message.match(/(?:generate|create|make|draw|paint)\s+(?:an?\s+)?(?:image|picture|photo)?\s*(?:of\s+)?(.+)/i)
-    const prompt = promptMatch ? promptMatch[1].trim() : message
-
-    console.log(`🎨 Generating image: "${prompt}"`)
-
-    const imageOptions: ImageGenerationOptions = {
-      prompt,
-      negativePrompt: "ugly, blurry, low quality, distorted",
-      width: 512,
-      height: 512,
-      steps: 10, // Reduced for faster generation
-      seed: Math.floor(Math.random() * 1000000)
-    }
-
-    const result = await generateImage(imageOptions)
-
-    if (!result.success) {
-      throw new Error(result.error || 'Image generation failed')
-    }
-
-    const cotSteps = [
-      'Classified query as image generation',
-      `User plan: ${userPlan}`,
-      `Model: Stable Diffusion 1.5`,
-      `Provider: ${result.provider}`,
-      'Image generated successfully'
-    ]
-
-    const response = `🎨 **Image Generated with Stable Diffusion 1.5!**\n\n` +
-      `**Prompt:** ${prompt}\n` +
-      `**Model:** Stable Diffusion 1.5 (Local GPU)\n` +
-      `**Size:** ${result.metadata.width}x${result.metadata.height}\n` +
-      `**Steps:** ${result.metadata.steps}\n\n` +
-      '*Generated locally on your RTX 3050 in 2-3 seconds!*'
-
-    console.log(`✅ Image generated successfully using ${result.model}`)
-
-    return {
-      response,
-      imageData: result.images[0], // Base64 image data
-      ragResults: {
-        entries: [{
-          id: 'image_generation',
-          content: `Generated image: ${prompt}`,
-          category: 'image',
-          timestamp: new Date(),
-          tags: ['image', 'generation', result.model],
-          priority: 'medium' as const,
-          relevanceScore: 1.0,
-          accessCount: 0,
-          lastAccessed: new Date()
-        }],
-        totalRelevance: 1.0,
-        categories: ['image'],
-        searchQuery: message,
-        processingTime: 0
-      },
-      cotSteps
-    }
-  } catch (error: any) {
-    console.error('❌ Image generation failed:', error)
-
-    return {
-      response: `I encountered an error generating the image: ${error.message}\n\n` +
-        `Please try:\n` +
-        `1. Rephrasing your prompt\n` +
-        `2. Checking if HUGGINGFACE_API_KEY is set in .env\n` +
-        `3. Waiting a moment and trying again`,
-      ragResults: {
-        entries: [],
-        totalRelevance: 0,
-        categories: [],
-        searchQuery: message,
-        processingTime: 0
-      },
-      cotSteps: ['Image generation failed', error.message]
-    }
-  }
-}
-
-function detectImageStyle(message: string): string | undefined {
-  const m = message.toLowerCase()
-
-  if (/\b(photo|photograph|realistic|real)\b/.test(m)) return 'realistic'
-  if (/\b(anime|manga|japanese)\b/.test(m)) return 'anime'
-  if (/\b(art|artistic|painting|painted)\b/.test(m)) return 'artistic'
-  if (/\b(digital|concept|artstation)\b/.test(m)) return 'digital-art'
-  if (/\b(photography|dslr|camera)\b/.test(m)) return 'photography'
-
-  return undefined
 }
 
 // ==================== MODE DETECTION ====================
 
 function detectModeFromMessage(msg: string): string {
   const m = msg.toLowerCase()
-
-  // Image generation keywords
-  if (/\b(generate|create|make|draw|paint|image|picture|photo|illustration)\b.*\b(image|picture|photo|of|a|an)\b/.test(m) ||
-    /\b(text.?to.?image|image.?generation)\b/.test(m)) {
-    return 'image'
-  }
 
   if (/\b(pain|hurt|sick|symptom|fever|cough|doctor|medical|health|diagnosis|medicine)\b/.test(m)) {
     return 'medical'
@@ -2320,20 +1826,6 @@ function detectModeFromMessage(msg: string): string {
   }
 
   return 'enhanced'
-}
-
-// ==================== SYNTHESIS SYSTEM INTEGRATION ====================
-
-async function querySynthesisSystem(query: string, mode: string = 'synthesis'): Promise<any> {
-  try {
-    const response = await axios.post('http://localhost:5000/synthesize', {
-      query,
-      mode
-    }, { timeout: 30000 }); // 30s timeout for full synthesis
-    return response.data;
-  } catch (error) {
-    return null; // Return null to indicate fallback is needed
-  }
 }
 
 // ==================== API ROUTE HANDLERS ====================
@@ -2370,56 +1862,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }), { status: 400 })
     }
 
-    // --- SYNTHESIS SYSTEM ROUTING ---
-    // Handle complex queries with the unified Python backend (LLM + RAG + CoT)
-    const synthesisKeywords = /explain|how|why|compare|analyze|what is|define|medical|symptom|treat/i;
-    // Route if: 1. It's a question/request, 2. Not a simple greeting, 3. Not an image request
-    const shouldSynth = synthesisKeywords.test(message) && !message.startsWith('generate image');
-
-    if (shouldSynth) {
-      console.log("🔄 Routing to Synthesis System...");
-      const synthesisResult = await querySynthesisSystem(message);
-
-      if (synthesisResult) {
-        console.log("✅ Synthesis System responded!");
-
-        // Format professionally
-        const formattedResponse = ProfessionalResponseFormatter.formatSynthesizedResponse(
-          message,
-          {
-            synthesized_answer: synthesisResult.synthesized_answer,
-            confidence: synthesisResult.confidence,
-            reasoning: synthesisResult.reasoning,
-            sources: synthesisResult.sources
-          }
-        );
-
-        // Convert to Markdown for the frontend
-        const markdownResponse = ProfessionalResponseFormatter.toMarkdown(formattedResponse);
-
-        return NextResponse.json(createDefaultResponse({
-          response: markdownResponse,
-          mode: 'synthesis_enhanced',
-          metadata: {
-            confidence: synthesisResult.confidence,
-            sources: synthesisResult.sources,
-            reasoning: synthesisResult.reasoning,
-            model: 'v64-synthesis-engine-v2',
-            responseTime: Date.now() - startTime
-          },
-          context: {
-            userName: global.conversationContext?.userName ?? null,
-            userMood: global.conversationContext?.userMood || 'neutral',
-            interests: [...(global.conversationContext?.interests || [])],
-            conversationLength: global.conversationContext?.conversationLength || 0,
-            systemOS: global.conversationContext?.systemOS || process.platform,
-            lastSearchQuery: global.conversationContext?.lastSearchQuery || null
-          }
-        }));
-      }
-      console.log("⚠️ Synthesis System unavailable, falling back...");
-    }
-
     const rateStatus = checkRateLimit(userId)
     if (!rateStatus.allowed) {
       console.warn(`⚠️ Rate limit exceeded for user ${userId}`)
@@ -2452,8 +1894,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     if (activeMode === 'medical') {
       console.log('➡️ Routing to medical agent')
-      const userPlan = requestBody.userPlan || 'Free'
-      const medicalResult = await handleMedicalQuery(message, userPlan)
+      const medicalResult = await handleMedicalQuery(message)
       response = createEnhancedResponse(
         medicalResult.response,
         'medical_agent',
@@ -2462,49 +1903,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         medicalResult.cotSteps
       )
       response.mode = 'medical'
-    } else if (activeMode === 'wikipedia') {
-      console.log('➡️ Routing to Wikipedia search')
-      const userPlan = requestBody.userPlan || 'Free'
-      const wikiResult = await handleWikipediaQuery(message, userPlan)
-      response = createEnhancedResponse(
-        wikiResult.response,
-        'wikipedia_search',
-        startTime,
-        wikiResult.ragResults,
-        wikiResult.cotSteps
-      )
-      response.mode = 'wikipedia'
-    } else if (activeMode === 'deepsearch') {
-      console.log('➡️ Routing to Deep Search')
-      const userPlan = requestBody.userPlan || 'Free'
-      const deepResult = await handleDeepSearchQuery(message, userPlan)
-      response = createEnhancedResponse(
-        deepResult.response,
-        'deep_search_agent',
-        startTime,
-        deepResult.ragResults,
-        deepResult.cotSteps
-      )
-      response.mode = 'deepsearch'
-    } else if (activeMode === 'image') {
-      console.log('➡️ Routing to image generation')
-      const userPlan = requestBody.userPlan || 'Free'
-      const imageResult = await handleImageGeneration(message, userPlan)
-      response = createEnhancedResponse(
-        imageResult.response,
-        'image_generation',
-        startTime,
-        imageResult.ragResults,
-        imageResult.cotSteps
-      )
-      // Add image data to response
-      if (imageResult.imageData) {
-        response.metadata = {
-          ...response.metadata,
-          imageData: imageResult.imageData
-        }
-      }
-      response.mode = 'image'
     } else {
       response = await processEnhancedUserMessage(message, userId)
       response.mode = activeMode
@@ -2539,7 +1937,6 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
   }
 }
 
-
 export async function GET(request: NextRequest): Promise<NextResponse> {
   return NextResponse.json({
     success: true,
@@ -2551,56 +1948,4 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       GET: "/api/voice-assistant - API status"
     }
   }, { status: 200 })
-}
-
-// ==================== LEARNING DATABASE LOGGING ====================
-
-// ==================== LEARNING DATABASE LOGGING ====================
-
-function logToLearningDB(query: string, response: string, confidence: number = 0.8, rejectedResponse: string | null = null) {
-  try {
-    const dbPath = path.join(process.cwd(), 'data', 'learning', 'knowledge.db');
-    // Ensure directory exists
-    const fs = require('fs');
-    const dir = path.dirname(dbPath);
-    if (!fs.existsSync(dir)) {
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    const db = new Database(dbPath);
-
-    // Create table if not exists with support for DPO (Rejected Response)
-    // We add the column if it doesn't exist (Migration logic)
-    db.exec(`
-      CREATE TABLE IF NOT EXISTS conversations (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        query TEXT,
-        response TEXT,
-        confidence REAL,
-        feedback INTEGER DEFAULT 0,
-        rejected_response TEXT,
-        timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-
-    // Basic migration for existing tables without the column
-    try {
-      db.exec("ALTER TABLE conversations ADD COLUMN rejected_response TEXT");
-    } catch (e) {
-      // Column likely exists or table just created
-    }
-
-    const stmt = db.prepare('INSERT INTO conversations (query, response, confidence, rejected_response) VALUES (?, ?, ?, ?)');
-    stmt.run(query, response, confidence, rejectedResponse);
-
-    if (rejectedResponse) {
-      console.log("📝 Logged [Correction] to Learning DB: System learned from a mistake.");
-    } else {
-      console.log("📝 Logged [Interaction] to Learning DB.");
-    }
-
-    db.close();
-  } catch (error) {
-    console.error("❌ Failed to log to Learning DB:", error);
-  }
 }

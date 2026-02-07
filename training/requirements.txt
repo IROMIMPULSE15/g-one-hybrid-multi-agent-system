@@ -1,9 +1,0 @@
-transformers
-peft
-datasets
-trl
-accelerate
-bitsandbytes
-scipy
-protobuf
-sentencepiece
