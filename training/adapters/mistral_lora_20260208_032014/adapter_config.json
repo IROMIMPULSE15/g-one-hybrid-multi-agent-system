@@ -1,0 +1,6 @@
+{
+  "model_name": "mistralai/Mistral-7B-Instruct-v0.1",
+  "adapter_version": "20260208_032014",
+  "quantization": "4-bit NF4",
+  "adapter_path": "adapters\\mistral_lora_20260208_032014\\adapter"
+}

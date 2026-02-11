@@ -1,0 +1,7 @@
+{"time":"2026-02-08T03:51:20.5700119+05:30","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"D:\\V64(M2)GIT\\training\\wandb\\run-20260208_035120-mrmd1wg8\\logs\\debug-core.log"}
+{"time":"2026-02-08T03:51:21.1463458+05:30","level":"INFO","msg":"created new stream","id":"mrmd1wg8"}
+{"time":"2026-02-08T03:51:21.1468929+05:30","level":"INFO","msg":"stream: started","id":"mrmd1wg8"}
+{"time":"2026-02-08T03:51:21.1480549+05:30","level":"INFO","msg":"sender: started","stream_id":"mrmd1wg8"}
+{"time":"2026-02-08T03:51:21.1480549+05:30","level":"INFO","msg":"writer: Do: started","stream_id":"mrmd1wg8"}
+{"time":"2026-02-08T03:51:21.1480549+05:30","level":"INFO","msg":"handler: started","stream_id":"mrmd1wg8"}
+{"time":"2026-02-08T03:51:21.978482+05:30","level":"INFO","msg":"Starting system monitor"}

@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Volume2, VolumeX } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Text from '@/components/Text';
+import { removeEmojis } from '@/lib/emoji-utils';
 
 interface TextToSpeechProps {
   text: string;
@@ -44,7 +45,10 @@ export function TextToSpeech({
     // Cancel any ongoing speech
     window.speechSynthesis.cancel();
 
-    const utterance = new SpeechSynthesisUtterance(text);
+    // Remove emojis before speaking
+    const cleanText = removeEmojis(text);
+    
+    const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = rate;
     utterance.pitch = pitch;
 

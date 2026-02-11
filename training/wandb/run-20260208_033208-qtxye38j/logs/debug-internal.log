@@ -1,0 +1,7 @@
+{"time":"2026-02-08T03:32:08.2039651+05:30","level":"INFO","msg":"stream: starting","core version":"0.19.11","symlink path":"D:\\V64(M2)GIT\\training\\wandb\\run-20260208_033208-qtxye38j\\logs\\debug-core.log"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"created new stream","id":"qtxye38j"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"stream: started","id":"qtxye38j"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"writer: Do: started","stream_id":"qtxye38j"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"handler: started","stream_id":"qtxye38j"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"sender: started","stream_id":"qtxye38j"}
+{"time":"2026-02-08T03:32:10.2687912+05:30","level":"INFO","msg":"Starting system monitor"}

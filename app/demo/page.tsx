@@ -18,6 +18,7 @@ import UsageLimitModal from "@/components/UsageLimitModal"
 import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
+import { removeEmojis } from "@/lib/emoji-utils"
 
 // Optimized dynamic imports with loading states
 const Canvas = dynamic(() => import("@react-three/fiber").then((mod) => ({ default: mod.Canvas })), {
@@ -395,27 +396,29 @@ export default function DemoPage() {
 
         // Clean markdown for text-to-speech
         const cleanTextForSpeech = (text: string): string => {
-          return text
-            // Remove markdown headers (# ## ###)
-            .replace(/^#{1,6}\s+/gm, '')
-            // Remove markdown bold/italic (**text** or *text*)
-            .replace(/\*\*([^*]+)\*\*/g, '$1')
-            .replace(/\*([^*]+)\*/g, '$1')
-            // Remove markdown code blocks (```code```)
-            .replace(/```[\s\S]*?```/g, '')
-            // Remove inline code (`code`)
-            .replace(/`([^`]+)`/g, '$1')
-            // Remove markdown links ([text](url))
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-            // Remove horizontal rules (--- or ===)
-            .replace(/^[-=]{3,}$/gm, '')
-            // Remove bullet points (- or *)
-            .replace(/^[-*]\s+/gm, '')
-            // Remove numbered lists (1. 2. etc)
-            .replace(/^\d+\.\s+/gm, '')
-            // Remove extra whitespace
-            .replace(/\s+/g, ' ')
-            .trim()
+          return removeEmojis(
+            text
+              // Remove markdown headers (# ## ###)
+              .replace(/^#{1,6}\s+/gm, '')
+              // Remove markdown bold/italic (**text** or *text*)
+              .replace(/\*\*([^*]+)\*\*/g, '$1')
+              .replace(/\*([^*]+)\*/g, '$1')
+              // Remove markdown code blocks (```code```)
+              .replace(/```[\s\S]*?```/g, '')
+              // Remove inline code (`code`)
+              .replace(/`([^`]+)`/g, '$1')
+              // Remove markdown links ([text](url))
+              .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+              // Remove horizontal rules (--- or ===)
+              .replace(/^[-=]{3,}$/gm, '')
+              // Remove bullet points (- or *)
+              .replace(/^[-*]\s+/gm, '')
+              // Remove numbered lists (1. 2. etc)
+              .replace(/^\d+\.\s+/gm, '')
+              // Remove extra whitespace
+              .replace(/\s+/g, ' ')
+              .trim()
+          )
         }
 
         // Text-to-speech with error handling and markdown cleaning

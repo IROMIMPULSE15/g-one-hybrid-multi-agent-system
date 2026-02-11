@@ -1,0 +1,50 @@
+{
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "CPython 3.13.3",
+  "startedAt": "2026-02-07T22:21:20.542545Z",
+  "args": [
+    "--epochs",
+    "5",
+    "--batch-size",
+    "2",
+    "--accumulation-steps",
+    "4"
+  ],
+  "program": "D:\\V64(M2)GIT\\training\\train_heavy.py",
+  "codePath": "training\\train_heavy.py",
+  "git": {
+    "remote": "git@github.com:IROMIMPULSE15/g-one-hybrid-multi-agent-system.git",
+    "commit": "dcc6f1ea92a472d3b6c2a85480a04d1dc54d7c94"
+  },
+  "email": "jagananmoldaneti@gmail.com",
+  "root": "D:\\V64(M2)GIT\\training",
+  "host": "LAPTOP-H7IT5N8S",
+  "executable": "C:\\Users\\JAGANANMOL\\AppData\\Local\\Programs\\Python\\Python313\\python.exe",
+  "codePathLocal": "train_heavy.py",
+  "cpu_count": 10,
+  "cpu_count_logical": 16,
+  "gpu": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "107373129728",
+      "used": "52273803264"
+    }
+  },
+  "memory": {
+    "total": "16873545728"
+  },
+  "cpu": {
+    "count": 10,
+    "countLogical": 16
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 3050 6GB Laptop GPU",
+      "memoryTotal": "6442450944",
+      "cudaCores": 2560,
+      "architecture": "Ampere"
+    }
+  ],
+  "cudaVersion": "13.0"
+}
