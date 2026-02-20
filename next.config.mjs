@@ -22,7 +22,6 @@ const nextConfig = {
   experimental: {
     optimizeCss: true,
     scrollRestoration: true,
-    turbopack: {},
   },
 
   // Compression and caching

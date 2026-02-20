@@ -1,0 +1,134 @@
+﻿
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ                                                                       Γòæ[0m
+[35m[1mΓòæ   GREETING AGENT vs LLM ΓÇö REAL A/B TOKEN COMPARISON                   Γòæ[0m
+[35m[1mΓòæ   No hypothetical numbers ΓÇö ALL measurements are REAL                 Γòæ[0m
+[35m[1mΓòæ   19/2/2026, 3:35:18 pm                                     Γòæ[0m
+[35m[1mΓòæ                                                                       Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  PHASE A: Greetings WITH Greeting Agent (Normal Behavior)[0m
+[36m[1m  Sending greetings normally ΓÇö Greeting Agent should intercept them[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à[0m "hi" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m53ms[0m
+     [2mΓåÆ "Hey! Ready to help. What's on your mind?..."[0m
+  [32mΓ£à[0m "hello" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m9ms[0m
+     [2mΓåÆ "Hello! ≡ƒæï How can I assist you today?..."[0m
+  [32mΓ£à[0m "hey" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m12ms[0m
+     [2mΓåÆ "Hey! Ready to help. What's on your mind?..."[0m
+  [32mΓ£à[0m "good morning" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m8ms[0m
+     [2mΓåÆ "Hello! I'm here to assist. What would you like to know?..."[0m
+  [32mΓ£à[0m "good afternoon" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m8ms[0m
+     [2mΓåÆ "Hey! Ready to help. What's on your mind?..."[0m
+  [32mΓ£à[0m "how are you" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m8ms[0m
+     [2mΓåÆ "All good here! What can I help you with today?..."[0m
+  [32mΓ£à[0m "thanks" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m9ms[0m
+     [2mΓåÆ "You're welcome! ≡ƒÿè Happy to help!..."[0m
+  [32mΓ£à[0m "thank you" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m8ms[0m
+     [2mΓåÆ "Anytime! Feel free to ask more questions...."[0m
+  [32mΓ£à[0m "bye" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m19ms[0m
+     [2mΓåÆ "Bye! Don't hesitate to ask if you need help again...."[0m
+  [32mΓ£à[0m "goodbye" ΓåÆ [1mgreeting_agent[0m | Tokens: [32m[1m0[0m | Time: [32m[1m12ms[0m
+     [2mΓåÆ "Bye! Don't hesitate to ask if you need help again...."[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  PHASE B: SAME Greetings FORCED TO LLM (Bypassing Greeting Agent)[0m
+[36m[1m  Wrapping greetings so regex doesn't match ΓåÆ LLM must process them[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [31m≡ƒºá[0m "hi" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~40[0m (input:21 + output:19) | Time: [33m[1m7548ms[0m
+     [2mΓåÆ "**Hello back! It's great to chat with you again. How ha..."[0m
+  [31m≡ƒºá[0m "hello" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~49[0m (input:22 + output:27) | Time: [33m[1m2292ms[0m
+     [2mΓåÆ "Hello! It's nice to meet you, Anonymous. I'm here to he..."[0m
+  [31m≡ƒºá[0m "hey" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~40[0m (input:21 + output:19) | Time: [33m[1m1469ms[0m
+     [2mΓåÆ "**Hi Anonymous! Nice to chat with you again. How's your..."[0m
+  [31m≡ƒºá[0m "good morning" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~45[0m (input:23 + output:22) | Time: [33m[1m1424ms[0m
+     [2mΓåÆ "Good morning! I'm glad to be chatting with you today. H..."[0m
+  [31m≡ƒºá[0m "good afternoon" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~55[0m (input:24 + output:31) | Time: [33m[1m2726ms[0m
+     [2mΓåÆ "Good afternoon! It's great to catch up with you. I hope..."[0m
+  [31m≡ƒºá[0m "how are you" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~184[0m (input:23 + output:161) | Time: [33m[1m3749ms[0m
+     [2mΓåÆ "**Hello!**
+
+I'm doing well, thanks for asking! I'm a la..."[0m
+  [31m≡ƒºá[0m "thanks" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~36[0m (input:22 + output:14) | Time: [33m[1m1275ms[0m
+     [2mΓåÆ "You're welcome! It was a pleasure chatting with you too..."[0m
+  [31m≡ƒºá[0m "thank you" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~42[0m (input:23 + output:19) | Time: [33m[1m1541ms[0m
+     [2mΓåÆ "You're welcome, Anonymous! It was my pleasure to assist..."[0m
+  [31m≡ƒºá[0m "bye" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~37[0m (input:21 + output:16) | Time: [33m[1m1731ms[0m
+     [2mΓåÆ "It was nice chatting with you, Anonymous! Have a great ..."[0m
+  [31m≡ƒºá[0m "goodbye" ΓåÆ [1mollama[0m (mistralai/Mistral-7B-Instruct-v0.2)
+     Tokens: [31m[1m~61[0m (input:22 + output:39) | Time: [33m[1m1848ms[0m
+     [2mΓåÆ "It was nice chatting with you, Anonymous! If you ever w..."[0m
+
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ              REAL A/B COMPARISON ΓÇö MEASURED RESULTS                   Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+  [1mSIDE-BY-SIDE PER-GREETING COMPARISON:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  [2mGreeting           WITH Agent           WITHOUT Agent (LLM)       Tokens Saved    Time Saved[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  "hi             " [32m0 tok /    53ms[0m  [31m  40 tok /  7548ms[0m   [32m[1m+40 saved[0m      [32m[1m+7.5s faster[0m
+  "hello          " [32m0 tok /     9ms[0m  [31m  49 tok /  2292ms[0m   [32m[1m+49 saved[0m      [32m[1m+2.3s faster[0m
+  "hey            " [32m0 tok /    12ms[0m  [31m  40 tok /  1469ms[0m   [32m[1m+40 saved[0m      [32m[1m+1.5s faster[0m
+  "good morning   " [32m0 tok /     8ms[0m  [31m  45 tok /  1424ms[0m   [32m[1m+45 saved[0m      [32m[1m+1.4s faster[0m
+  "good afternoon " [32m0 tok /     8ms[0m  [31m  55 tok /  2726ms[0m   [32m[1m+55 saved[0m      [32m[1m+2.7s faster[0m
+  "how are you    " [32m0 tok /     8ms[0m  [31m 184 tok /  3749ms[0m   [32m[1m+184 saved[0m      [32m[1m+3.7s faster[0m
+  "thanks         " [32m0 tok /     9ms[0m  [31m  36 tok /  1275ms[0m   [32m[1m+36 saved[0m      [32m[1m+1.3s faster[0m
+  "thank you      " [32m0 tok /     8ms[0m  [31m  42 tok /  1541ms[0m   [32m[1m+42 saved[0m      [32m[1m+1.5s faster[0m
+  "bye            " [32m0 tok /    19ms[0m  [31m  37 tok /  1731ms[0m   [32m[1m+37 saved[0m      [32m[1m+1.7s faster[0m
+  "goodbye        " [32m0 tok /    12ms[0m  [31m  61 tok /  1848ms[0m   [32m[1m+61 saved[0m      [32m[1m+1.8s faster[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  [1mTOKEN TOTALS:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  WITH Greeting Agent (Phase A):       [32m[1m0 tokens[0m  (all greetings = 0)
+  WITHOUT Greeting Agent (Phase B):    [31m[1m589 tokens[0m  (all went to LLM)
+  Tokens saved by Greeting Agent:      [32m[1m589 tokens[0m
+
+  [1mRESPONSE TIME TOTALS:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Avg time WITH agent:                 [32m[1m15ms[0m
+  Avg time WITHOUT agent (LLM):        [31m[1m2560ms[0m
+  Speed improvement:                   [32m[1m171x faster[0m
+
+  [35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+  [35m[1mΓòæ                                                                  Γòæ[0m
+  [35m[1mΓòæ   ≡ƒÅå REAL TOKEN SAVINGS (measured, not estimated):                Γòæ[0m
+  [35m[1mΓòæ                                                                  Γòæ[0m
+  [35m[1mΓòæ   Tokens WITH Greeting Agent:       [32m[1m     0 tokens[35m[1m               Γòæ[0m
+  [35m[1mΓòæ   Tokens WITHOUT Greeting Agent:    [31m[1m   589 tokens[35m[1m               Γòæ[0m
+  [35m[1mΓòæ                                                                  Γòæ[0m
+  [35m[1mΓòæ   Γ£à TOKENS SAVED:    [32m[1m   589 tokens[35m[1m                             Γòæ[0m
+  [35m[1mΓòæ   Γ£à SAVINGS:         [32m[1m100.0% reduction[35m[1m                              Γòæ[0m
+  [35m[1mΓòæ   Γ£à SPEED:           [32m[1m171x faster[35m[1m                                  Γòæ[0m
+  [35m[1mΓòæ                                                                  Γòæ[0m
+  [35m[1mΓòæ   All numbers are REAL ΓÇö measured from live Ollama/Mistral API    Γòæ[0m
+  [35m[1mΓòæ                                                                  Γòæ[0m
+  [35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+  [1mHOW THIS PROVES TOKEN SAVINGS:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Phase A sent "hi", "hello", etc. normally.
+  ΓåÆ The Greeting Agent intercepted them with REGEX (no LLM).
+  ΓåÆ Result: [32m0 tokens used, 15ms average response.[0m
+
+  Phase B sent the SAME greetings but FORCED them to the LLM.
+  ΓåÆ The LLM (Ollama/Mistral) processed each one fully.
+  ΓåÆ Result: [31m589 tokens consumed, 2560ms average.[0m
+
+  [32m[1mWithout the Greeting Agent, every "hi" and "bye" would waste
+  589 tokens and 25.6s of LLM compute time.[0m
+  [32m[1mThe Greeting Agent eliminates this waste entirely.[0m
+

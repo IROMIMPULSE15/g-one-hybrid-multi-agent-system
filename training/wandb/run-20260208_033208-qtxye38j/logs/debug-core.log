@@ -1,1 +1,6 @@
-C:/Users/JAGANANMOL/AppData/Local/wandb/logs/core-debug-20260208_033206.log
+{"time":"2026-02-08T03:32:06.5930074+05:30","level":"INFO","msg":"main: starting server","port-filename":"C:\\Users\\JAGANA~1\\AppData\\Local\\Temp\\tmpk_2zr2nf\\port-14532.txt","pid":14532,"log-level":0,"disable-analytics":false,"shutdown-on-parent-exit":false,"enable-dcgm-profiling":false}
+{"time":"2026-02-08T03:32:06.5963015+05:30","level":"INFO","msg":"Will exit if parent process dies.","ppid":14532}
+{"time":"2026-02-08T03:32:06.5963015+05:30","level":"INFO","msg":"server is running","addr":{"IP":"127.0.0.1","Port":53154,"Zone":""}}
+{"time":"2026-02-08T03:32:06.773164+05:30","level":"INFO","msg":"connection: ManageConnectionData: new connection created","id":"127.0.0.1:53155"}
+{"time":"2026-02-08T03:32:08.2018896+05:30","level":"INFO","msg":"handleInformInit: received","streamId":"qtxye38j","id":"127.0.0.1:53155"}
+{"time":"2026-02-08T03:32:09.6904101+05:30","level":"INFO","msg":"handleInformInit: stream started","streamId":"qtxye38j","id":"127.0.0.1:53155"}

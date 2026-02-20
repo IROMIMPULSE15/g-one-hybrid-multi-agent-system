@@ -4,8 +4,9 @@ import { useState, useRef, useEffect, useCallback, Suspense, useMemo } from "rea
 import { motion, AnimatePresence } from "framer-motion"
 import {
   Mic, MicOff, Send, Bot, User, Info, Lock, Search, AlertCircle,
-  Stethoscope, BookOpen, Image as ImageIcon, Upload, X,
-  Sparkles, Brain, Loader2, Trash2, Settings, Square
+  Stethoscope, BookOpen, Mail, Upload, X, ShoppingCart,
+  Sparkles, Brain, Loader2, Trash2, Settings, Square,
+  DollarSign, GraduationCap
 } from "lucide-react"
 import dynamic from "next/dynamic"
 import Navigation from "@/components/Navigation"
@@ -55,11 +56,13 @@ const MODES = {
   DEEPSEARCH: 'deepsearch',
   WIKIPEDIA: 'wikipedia',
   MEDICAL: 'medical',
-  IMAGE: 'image',
-  TEXT_TO_IMAGE: 'text-to-image'
+  EMAIL: 'email',
+  SHOPPING: 'shopping',
+  FINANCE: 'finance',
+  RESEARCH: 'research'
 } as const
 
-// Enhanced extension options with RAG and Text-to-Image
+// Enhanced extension options with RAG and MarketMind Shopping
 const extensionOptions = [
   {
     id: 'wikipedia',
@@ -89,22 +92,40 @@ const extensionOptions = [
     color: "red"
   },
   {
-    id: 'image-analysis',
-    title: "Image Processing",
-    description: "Analyze and process images",
-    prefix: "image analysis",
-    icon: <ImageIcon className="w-6 h-6 text-purple-400 group-hover:text-purple-300" />,
+    id: 'email-agent',
+    title: "Email Agent",
+    description: "Voice-controlled email assistant",
+    prefix: "email agent",
+    icon: <Mail className="w-6 h-6 text-purple-400 group-hover:text-purple-300" />,
     requiresPaid: true,
     color: "purple"
   },
   {
-    id: 'text-to-image',
-    title: "Text to Image",
-    description: "Generate images from text",
-    prefix: "generate image",
-    icon: <Sparkles className="w-6 h-6 text-pink-400 group-hover:text-pink-300" />,
+    id: 'shopping',
+    title: "MarketMind",
+    description: "Smart shopping research agent",
+    prefix: "shopping agent",
+    icon: <ShoppingCart className="w-6 h-6 text-orange-400 group-hover:text-orange-300" />,
     requiresPaid: true,
-    color: "pink"
+    color: "orange"
+  },
+  {
+    id: 'finance',
+    title: "FinanceGuard",
+    description: "EMI, risk analysis & portfolio advisor",
+    prefix: "finance agent",
+    icon: <DollarSign className="w-6 h-6 text-emerald-400 group-hover:text-emerald-300" />,
+    requiresPaid: true,
+    color: "emerald"
+  },
+  {
+    id: 'research',
+    title: "ScholarMind",
+    description: "Research paper simplifier",
+    prefix: "scholar mind",
+    icon: <GraduationCap className="w-6 h-6 text-amber-400 group-hover:text-amber-300" />,
+    requiresPaid: true,
+    color: "amber"
   },
 ]
 
@@ -165,6 +186,8 @@ export default function DemoPage() {
   const [searchMode, setSearchMode] = useState<string | null>(null)
   const [selectedMode, setSelectedMode] = useState<keyof typeof MODES>('AUTO')
   const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [uploadedPaper, setUploadedPaper] = useState<{ name: string; text: string; charCount: number } | null>(null)
+  const [paperUploading, setPaperUploading] = useState(false)
   const [showUpgradePrompt, setShowUpgradePrompt] = useState(false)
   const [showSettings, setShowSettings] = useState(false)
 
@@ -196,6 +219,7 @@ export default function DemoPage() {
   const mediaStreamRef = useRef<MediaStream | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const paperFileInputRef = useRef<HTMLInputElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Redirect to login if not authenticated
@@ -312,15 +336,14 @@ export default function DemoPage() {
     const targetMode = prefix.startsWith('wikipedia') ? 'WIKIPEDIA' :
       prefix.startsWith('deep') ? 'DEEPSEARCH' :
         prefix.startsWith('medical') ? 'MEDICAL' :
-          prefix.startsWith('image analysis') ? 'IMAGE' :
-            prefix.startsWith('generate') ? 'TEXT_TO_IMAGE' : 'AUTO'
+          prefix.startsWith('email agent') ? 'EMAIL' :
+            prefix.startsWith('shopping') ? 'SHOPPING' :
+              prefix.startsWith('finance') ? 'FINANCE' :
+                prefix.startsWith('scholar') ? 'RESEARCH' : 'AUTO'
     setSelectedMode((prev) => (prev === targetMode ? 'AUTO' : (targetMode as keyof typeof MODES)))
     setInputText("")
 
-    // Open file picker for image processing
-    if (prefix.startsWith('image analysis') && fileInputRef.current) {
-      fileInputRef.current.click()
-    } else if (inputRef.current) {
+    if (inputRef.current) {
       inputRef.current.focus()
     }
   }, [canUseExtension])
@@ -345,15 +368,55 @@ export default function DemoPage() {
     }
   }, [])
 
+  // Paper (PDF/TXT) upload for ScholarMind
+  const handlePaperUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    // Reset input so same file can be re-selected
+    e.target.value = ''
+
+    const allowed = ['application/pdf', 'text/plain', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    const ext = file.name.toLowerCase()
+    if (!allowed.includes(file.type) && !ext.endsWith('.pdf') && !ext.endsWith('.txt') && !ext.endsWith('.docx')) {
+      setSpeechError('Unsupported file type. Please upload a PDF, TXT, or DOCX file.')
+      return
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setSpeechError('File too large. Maximum 10MB.')
+      return
+    }
+
+    setPaperUploading(true)
+    setSpeechError('')
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/upload-paper', { method: 'POST', body: formData })
+      const data = await res.json()
+      if (!res.ok || !data.success) {
+        setSpeechError(data.error || 'Failed to extract text from file.')
+        return
+      }
+      setUploadedPaper({ name: file.name, text: data.extractedText, charCount: data.charCount })
+      if (data.truncated) {
+        setSpeechError(`Large paper — using first ${data.charCount.toLocaleString()} characters for analysis.`)
+      }
+    } catch (err) {
+      setSpeechError('Upload failed. Please check your connection and try again.')
+    } finally {
+      setPaperUploading(false)
+    }
+  }, [])
+
   // Message sending with improved error handling
   const sendMessage = useCallback(
     async (message: string, imageData?: string) => {
-      if (!message.trim() && !imageData) return
+      if (!message.trim() && !imageData && !uploadedPaper) return
 
       const userMessage: Message = {
         id: `${Date.now()}-user`,
         type: MESSAGE_TYPES.USER,
-        content: message,
+        content: uploadedPaper ? `📄 ${uploadedPaper.name}\n\n${message || '(Analyze this paper)'}` : message,
         timestamp: new Date(),
         imageUrl: imageData,
       }
@@ -363,7 +426,13 @@ export default function DemoPage() {
       setSpeechError("")
 
       try {
-        const bodyPayload: any = { message }
+        const bodyPayload: any = {
+          message: uploadedPaper ? (message || 'Analyze this research paper') : message,
+          userName: session?.user?.name,
+          userEmail: session?.user?.email,
+          accessToken: (session as any)?.accessToken,
+          ...(uploadedPaper ? { paperText: uploadedPaper.text, mode: 'research' } : {})
+        }
         if (selectedMode && selectedMode !== 'AUTO') bodyPayload.mode = selectedMode.toLowerCase()
         if (imageData) bodyPayload.image = imageData
 
@@ -394,10 +463,39 @@ export default function DemoPage() {
 
         setMessages((prev) => [...prev, assistantMessage])
 
-        // Clean markdown for text-to-speech
+        // Clean markdown and email-agent noise for text-to-speech
         const cleanTextForSpeech = (text: string): string => {
+          // Detect if this is an email agent response
+          const isEmailResponse = data.mode === 'email'
+
+          let cleaned = text
+
+          if (isEmailResponse) {
+            // For email mode: only speak the conversational part, not the full draft
+            // Strip everything from the email body section header onwards
+            cleaned = cleaned
+              // Remove the full email body section (─── Email Body ─── ... ─────────────────)
+              .replace(/─+\s*Email Body\s*─+[\s\S]*?─{5,}/gi, '')
+              // Remove separator lines
+              .replace(/^─+$/gm, '')
+              // Remove instruction footers like "Say write another mail..."
+              .replace(/Say "write another mail"[^.]*\./gi, '')
+              .replace(/Say "write another[^"]*"[^.]*\./gi, '')
+              .replace(/Say "change[^"]*"[^.]*\./gi, '')
+              // Remove raw email addresses from speech (they sound bad when read aloud)
+              .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, 'the recipient')
+              // Remove "─── Email Body ───" type headers
+              .replace(/─+[^─]*─+/g, '')
+              // Remove "📌 Subject: ..." line (subject is shown in chat, no need to read)
+              .replace(/Subject:\s*.+/gi, '')
+              // Remove "✉️ To: ..." line
+              .replace(/To:\s*.+/gi, '')
+              // Remove "📝 Topic: ..." line
+              .replace(/Topic:\s*.+/gi, '')
+          }
+
           return removeEmojis(
-            text
+            cleaned
               // Remove markdown headers (# ## ###)
               .replace(/^#{1,6}\s+/gm, '')
               // Remove markdown bold/italic (**text** or *text*)
@@ -456,19 +554,20 @@ export default function DemoPage() {
         setIsProcessing(false)
         setSearchMode(null)
         setUploadedImage(null)
+        setUploadedPaper(null)
       }
     },
-    [selectedMode],
+    [selectedMode, session],
   )
 
   const handleSendText = useCallback(() => {
-    if (inputText.trim() || uploadedImage) {
+    if (inputText.trim() || uploadedImage || uploadedPaper) {
       const message = searchMode ? `${searchMode} ${inputText}` : inputText
       sendMessage(message, uploadedImage || undefined)
       setInputText("")
       setSearchMode(null)
     }
-  }, [inputText, uploadedImage, searchMode, sendMessage])
+  }, [inputText, uploadedImage, uploadedPaper, searchMode, sendMessage])
 
   // Voice recording
   const toggleRecording = useCallback(async () => {
@@ -579,6 +678,7 @@ export default function DemoPage() {
     setSearchMode(null)
     setSelectedMode('AUTO')
     setUploadedImage(null)
+    setUploadedPaper(null)
     if (inputRef.current) {
       inputRef.current.focus()
     }
@@ -694,7 +794,7 @@ export default function DemoPage() {
             >
               <h3 className="text-2xl font-bold text-white mb-4"><Text>Upgrade Required</Text></h3>
               <p className="text-gray-300 mb-6">
-                <Text>This is a premium extension. Upgrade to Pro or Premium to unlock all advanced features including Wikipedia Search, Deep Search, Medical Search, Image Processing, and Text-to-Image generation.</Text>
+                <Text>This is a premium extension. Upgrade to Pro or Premium to unlock all advanced features including Wikipedia Search, Deep Search, Medical Search, Email Agent, and MarketMind Shopping.</Text>
               </p>
               <div className="flex space-x-4">
                 <Button
@@ -1056,6 +1156,33 @@ export default function DemoPage() {
 
                     {/* Input Area */}
                     <div className="space-y-4">
+                      {/* Paper Upload Preview (ScholarMind mode) */}
+                      <AnimatePresence>
+                        {uploadedPaper && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -8 }}
+                            className="flex items-center justify-between px-4 py-3 bg-amber-500/10 border border-amber-500/40 rounded-xl backdrop-blur-sm"
+                          >
+                            <div className="flex items-center space-x-3 min-w-0">
+                              <GraduationCap className="w-5 h-5 text-amber-400 flex-shrink-0" />
+                              <div className="min-w-0">
+                                <p className="text-amber-200 text-sm font-semibold truncate">{uploadedPaper.name}</p>
+                                <p className="text-amber-400/70 text-xs">{uploadedPaper.charCount.toLocaleString()} characters extracted — ready to analyze</p>
+                              </div>
+                            </div>
+                            <Button
+                              onClick={() => setUploadedPaper(null)}
+                              size="sm"
+                              variant="ghost"
+                              className="text-amber-400 hover:text-red-400 hover:bg-red-500/10 flex-shrink-0 ml-2"
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                       {/* Image Preview */}
                       <AnimatePresence>
                         {uploadedImage && (
@@ -1095,14 +1222,17 @@ export default function DemoPage() {
                             }
                           }}
                           placeholder={
-                            searchMode
-                              ? `Enter your ${searchMode} query...`
-                              : "Type your message... (General chat with RAG + CoT is always free!)"
+                            uploadedPaper
+                              ? `Ask a question about "${uploadedPaper.name}" or press Send to analyze...`
+                              : searchMode
+                                ? `Enter your ${searchMode} query...`
+                                : "Type your message... (General chat with RAG + CoT is always free!)"
                           }
                           className="flex-1 bg-white/10 border-white/20 text-white placeholder-gray-400 focus:border-purple-500 text-base py-6 rounded-xl"
                           disabled={isProcessing}
                           aria-label="Message input"
                         />
+                        {/* Hidden image input */}
                         <input
                           ref={fileInputRef}
                           type="file"
@@ -1111,17 +1241,45 @@ export default function DemoPage() {
                           className="hidden"
                           aria-label="Upload image"
                         />
-                        <Button
-                          onClick={() => fileInputRef.current?.click()}
-                          disabled={isProcessing || selectedMode !== 'IMAGE'}
-                          className="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/50 px-4"
-                          title="Upload image"
-                        >
-                          <Upload className="w-5 h-5" />
-                        </Button>
+                        {/* Hidden paper input */}
+                        <input
+                          ref={paperFileInputRef}
+                          type="file"
+                          accept=".pdf,.txt,.docx,application/pdf,text/plain"
+                          onChange={handlePaperUpload}
+                          className="hidden"
+                          aria-label="Upload research paper"
+                        />
+                        {/* Upload button — ScholarMind: paper upload; others: image upload */}
+                        {selectedMode === 'RESEARCH' ? (
+                          <Button
+                            onClick={() => paperFileInputRef.current?.click()}
+                            disabled={isProcessing || paperUploading}
+                            className={`px-4 border transition-all duration-200 ${uploadedPaper
+                              ? 'bg-amber-500/20 border-amber-500/70 text-amber-300 hover:bg-amber-500/30'
+                              : 'bg-amber-600/20 hover:bg-amber-600/40 border-amber-500/50 text-amber-300'
+                              } ${(isProcessing || paperUploading) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={uploadedPaper ? 'Paper loaded — click to change' : 'Upload PDF/TXT paper for ScholarMind'}
+                          >
+                            {paperUploading ? (
+                              <Loader2 className="w-5 h-5 animate-spin" />
+                            ) : (
+                              <Upload className="w-5 h-5" />
+                            )}
+                          </Button>
+                        ) : (
+                          <Button
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={true}
+                            className="bg-purple-600/20 hover:bg-purple-600/40 border border-purple-500/50 px-4 opacity-50 cursor-not-allowed"
+                            title="Upload image (Not available in Email mode)"
+                          >
+                            <Upload className="w-5 h-5" />
+                          </Button>
+                        )}
                         <Button
                           onClick={handleSendText}
-                          disabled={(!inputText.trim() && !uploadedImage) || isProcessing}
+                          disabled={(!inputText.trim() && !uploadedImage && !uploadedPaper) || isProcessing}
                           className="bg-gradient-to-r from-purple-600 to-cyan-600 hover:from-purple-700 hover:to-cyan-700 px-6 disabled:opacity-50 disabled:cursor-not-allowed"
                           aria-label="Send message"
                         >

@@ -6,6 +6,10 @@ import { searchTrainedDataLegacy } from './json_search'
 import { searchMedical } from './medicalsearch'
 import { isBriefExplanationQuery, generateBriefExplanation, formatBriefExplanationResponse } from './brief_explainer'
 import { isGreetingOrSmallTalk, generateGreetingResponse, recordGreetingHandled } from './greeting_agent'
+import { handleEmailQuery } from './email_agent'
+import { isShoppingIntent, handleShoppingQuery, recordShoppingQuery } from './shopping_agent'
+import { isFinanceIntent, handleFinanceQuery, recordFinanceQuery } from './finance_agent'
+import { isResearchPaperIntent, handleResearchQuery, recordScholarQuery } from './research_agent'
 import type { Pinecone } from "@pinecone-database/pinecone"
 import axios from "axios"
 import crypto from "crypto"
@@ -52,6 +56,7 @@ interface ConversationEntry {
 
 interface UserData {
   userName: string | null
+  userEmail?: string
   userMood: string
   interests: string[]
   conversationHistory: ConversationEntry[]
@@ -68,6 +73,8 @@ interface UserData {
 
 interface ConversationContext {
   userName: string | null
+  userEmail?: string
+  emailDraft?: any
   userMood: string
   interests: string[]
   systemOS: string
@@ -1636,6 +1643,413 @@ function createEnhancedResponse(
   })
 }
 
+// ==================== SHARED TOPIC EXTRACTOR ====================
+
+/**
+ * Extract the core topic/subject from a conversational message.
+ * Strips greetings, filler phrases, question prefixes, and command words.
+ * e.g. "hi can you explain gravity" → "gravity"
+ *      "deep search quantum computing please" → "quantum computing"
+ */
+function extractCoreTopic(message: string): string {
+  let t = message.trim()
+
+  // 1. Strip leading greetings
+  t = t.replace(/^(hi|hello|hey|good\s+(morning|afternoon|evening))[,!.\s]*/i, '')
+
+  // 2. Strip conversational wrappers / filler
+  t = t
+    .replace(/^(can you|could you|would you|please|i want to know|i need to know|tell me|show me|give me)[,\s]*/i, '')
+    .replace(/^(briefly\s+)?(explain|describe|define|summarize|summarise|elaborate on|talk about|discuss)[,\s]*/i, '')
+    .replace(/^(what is|what are|who is|who was|where is|when was|why is|how is)[,\s]*/i, '')
+    .replace(/^(search for|look up|find|research|investigate|analyze|deep search|deepsearch)[,\s]*/i, '')
+    .replace(/^(wikipedia|wiki)[,\s]*/i, '')
+    .replace(/[,!.?\s]*(please|thanks|thank you)[,!.?\s]*$/i, '')
+    .replace(/\?+$/, '')
+    .trim()
+
+  // 3. If nothing meaningful left, return original trimmed
+  return t.length > 1 ? t : message.trim()
+}
+
+// ==================== WIKIPEDIA AGENT ====================
+
+/**
+ * Detect if a message is a general/conversational question
+ * that should NOT be sent to Wikipedia (e.g. "list 10 IoT apps", "how to code")
+ */
+function isGeneralQuestion(msg: string): boolean {
+  const m = msg.toLowerCase().trim()
+  return (
+    // List/enumeration requests
+    /\b(list|give me|state|name|show|tell me)\s+\d+/i.test(m) ||
+    /\b(top|best|worst)\s+\d+/i.test(m) ||
+    // How-to / instructions
+    /^how\s+(to|do|can|does|did|would|should)/i.test(m) ||
+    // Comparison / opinion
+    /\b(vs|versus|compare|difference between|better than|pros and cons)\b/i.test(m) ||
+    // Requests for lists without a specific entity
+    /\b(applications|examples|uses|types|ways|steps|reasons|benefits|advantages|disadvantages)\b/i.test(m) ||
+    // Conversational / advice
+    /\b(should i|can you|could you|would you|please|help me)\b/i.test(m) ||
+    // Long sentences (> 7 words) are rarely a single Wikipedia topic
+    m.split(/\s+/).length > 7
+  )
+}
+
+/**
+ * Try Wikipedia search API to find the best matching article title
+ * when the direct summary lookup fails
+ */
+async function searchWikipediaTitle(query: string): Promise<string | null> {
+  try {
+    const searchUrl = `https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=1`
+    const res = await axios.get(searchUrl, {
+      timeout: 5000,
+      headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' }
+    })
+    const results = res.data?.query?.search || []
+    return results.length > 0 ? results[0].title : null
+  } catch {
+    return null
+  }
+}
+
+async function handleWikipediaQuery(message: string, userId: string = 'anonymous'): Promise<{
+  response: string
+  sources: string[]
+  cotSteps: string[]
+  isAiFallback?: boolean
+}> {
+  // Extract the clean core topic
+  const topic = extractCoreTopic(message)
+
+  console.log(`📖 Wikipedia agent — topic: "${topic}" (from: "${message}")`)
+
+  // ── GATE: Is this a general question? Route to AI but STILL fetch Wikipedia links ──
+  if (isGeneralQuestion(message)) {
+    console.log(`🔀 Wikipedia mode: general question — AI answer + Wikipedia links for: "${topic}"`)
+
+    // Fetch Wikipedia data in parallel with AI generation
+    const [aiResult, wikiData] = await Promise.allSettled([
+      generateWithProvider(
+        `Answer the following question clearly and thoroughly:\n\n${message}\n\nProvide a well-structured, informative response.`,
+        { maxTokens: 1200, temperature: 0.5, model: process.env.LLM_MODEL }
+      ),
+      axios.get(
+        `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`,
+        { timeout: 6000, headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' } }
+      ).catch(() =>
+        // Fallback: search for the topic
+        searchWikipediaTitle(topic).then(title =>
+          title
+            ? axios.get(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+              { timeout: 6000, headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' } })
+            : null
+        )
+      )
+    ])
+
+    const aiText = aiResult.status === 'fulfilled'
+      ? ((aiResult.value as any)?.text || String(aiResult.value || '')).trim()
+      : ''
+
+    // Build response: AI answer + Wikipedia links appended
+    let response = aiText || `Here is what I know about **${topic}**:\n\n(AI generation failed — please try again.)`
+
+    // Append Wikipedia links if found
+    const wikiPageData = wikiData.status === 'fulfilled' && wikiData.value
+      ? (wikiData.value as any)?.data
+      : null
+
+    const sources: string[] = []
+    if (wikiPageData?.extract) {
+      const articleUrl = wikiPageData.content_urls?.desktop?.page ||
+        `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiPageData.title)}`
+      sources.push(articleUrl)
+
+      response += `\n\n---\n\n### 📖 Wikipedia: ${wikiPageData.title}\n`
+      response += `${wikiPageData.extract.split('.').slice(0, 3).join('.')}...\n\n`
+      response += `🔗 **[Read full article on Wikipedia](${articleUrl})**`
+
+      // Also fetch related links
+      try {
+        const linksRes = await axios.get(
+          `https://en.wikipedia.org/api/rest_v1/page/related/${encodeURIComponent(wikiPageData.title)}`,
+          { timeout: 5000, headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' } }
+        )
+        const pages = linksRes.data?.pages || []
+        const relatedLinks = pages.slice(0, 5).map((p: any) => ({
+          title: p.title,
+          url: p.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(p.title)}`
+        }))
+        if (relatedLinks.length > 0) {
+          response += `\n\n### 🔗 Related Wikipedia Articles\n`
+          relatedLinks.forEach((link: any, i: number) => {
+            response += `${i + 1}. [${link.title}](${link.url})\n`
+            sources.push(link.url)
+          })
+        }
+      } catch { /* ignore */ }
+    }
+
+    return {
+      response,
+      sources,
+      cotSteps: [`general_question_detected`, `ai_answer:success`, `wikipedia_links:${sources.length}`],
+      isAiFallback: true
+    }
+  }
+
+  // ── WIKIPEDIA LOOKUP ────────────────────────────────────────────────────────
+  try {
+    let wikiData: any = null
+
+    // 1a. Try direct summary lookup first
+    try {
+      const summaryUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(topic)}`
+      const summaryRes = await axios.get(summaryUrl, {
+        timeout: 8000,
+        headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' }
+      })
+      if (summaryRes.data?.extract) {
+        wikiData = summaryRes.data
+      }
+    } catch {
+      console.warn('⚠️ Direct Wikipedia summary failed, trying search API')
+    }
+
+    // 1b. Fallback: use Wikipedia search API to find the best matching title
+    if (!wikiData) {
+      const bestTitle = await searchWikipediaTitle(topic)
+      if (bestTitle) {
+        console.log(`🔍 Wikipedia search found: "${bestTitle}"`)
+        try {
+          const fallbackUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`
+          const fallbackRes = await axios.get(fallbackUrl, {
+            timeout: 8000,
+            headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' }
+          })
+          if (fallbackRes.data?.extract) {
+            wikiData = fallbackRes.data
+          }
+        } catch {
+          console.warn('⚠️ Wikipedia fallback summary also failed')
+        }
+      }
+    }
+
+    // 1c. If still no Wikipedia data, use AI to answer
+    if (!wikiData) {
+      console.log(`🤖 No Wikipedia article found — using AI for: "${topic}"`)
+      try {
+        const aiResult = await generateWithProvider(
+          `The user asked about "${topic}" in Wikipedia search mode. Provide a factual, encyclopedic explanation:\n\n${message}`,
+          { maxTokens: 1000, temperature: 0.3, model: process.env.LLM_MODEL }
+        )
+        const aiText = (aiResult as any)?.text || String(aiResult || '')
+        return {
+          response: `## 🤖 AI Answer: ${topic}\n\n${aiText.trim()}\n\n> ℹ️ No Wikipedia article found for this topic. Showing AI-generated answer.`,
+          sources: [],
+          cotSteps: [`wikipedia_search:no_result`, `ai_fallback:success`],
+          isAiFallback: true
+        }
+      } catch {
+        return {
+          response: `❌ No Wikipedia article found for **"${topic}"**.\n\nTry searching for a more specific term, like a person's name, a technology, or a place.`,
+          sources: [],
+          cotSteps: ['wikipedia_search:no_result', 'ai_fallback:failed']
+        }
+      }
+    }
+
+    // 2. Fetch related articles
+    let relatedLinks: { title: string; url: string }[] = []
+    try {
+      const linksUrl = `https://en.wikipedia.org/api/rest_v1/page/related/${encodeURIComponent(wikiData.title)}`
+      const linksRes = await axios.get(linksUrl, {
+        timeout: 5000,
+        headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' }
+      })
+      const pages = linksRes.data?.pages || []
+      relatedLinks = pages.slice(0, 5).map((p: any) => ({
+        title: p.title,
+        url: p.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(p.title)}`
+      }))
+    } catch {
+      console.warn('⚠️ Wikipedia related links fetch failed')
+    }
+
+    const articleUrl = wikiData.content_urls?.desktop?.page ||
+      `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiData.title)}`
+
+    // 3. Build formatted response
+    let response = `## 📖 ${wikiData.title}\n\n`
+    response += `${wikiData.extract}\n\n`
+    response += `🔗 **[Read full article on Wikipedia](${articleUrl})**\n`
+
+    if (relatedLinks.length > 0) {
+      response += `\n---\n\n### 🔗 Related Wikipedia Articles\n`
+      relatedLinks.forEach((link, i) => {
+        response += `${i + 1}. [${link.title}](${link.url})\n`
+      })
+    }
+
+    return {
+      response,
+      sources: [articleUrl, ...relatedLinks.map(l => l.url)],
+      cotSteps: [
+        `wikipedia_search:"${topic}"`,
+        `article_found:"${wikiData.title}"`,
+        `related_links:${relatedLinks.length}`
+      ]
+    }
+
+  } catch (error: any) {
+    console.error('❌ Wikipedia agent error:', error?.message)
+    return {
+      response: `❌ Could not fetch Wikipedia data for **"${topic}"**. Please try again.`,
+      sources: [],
+      cotSteps: ['wikipedia_search:error']
+    }
+  }
+}
+
+// ==================== DEEPSEARCH AGENT ====================
+
+async function handleDeepSearchQuery(message: string, userId: string): Promise<{
+  response: string
+  sources: string[]
+  cotSteps: string[]
+}> {
+  // Extract the clean core topic (strips greetings, filler, question prefixes)
+  const query = extractCoreTopic(message)
+
+  console.log(`🔍 Deep search — query: "${query}" (from: "${message}")`)
+
+  const sources: string[] = []
+  const cotSteps: string[] = [`deepsearch_query:"${query}"`]
+  let webSnippets = ''
+  let wikiContext = ''
+  let wikiUrl = ''
+  let wikiTitle = query
+
+  // 1. Fetch DuckDuckGo snippets
+  try {
+    const ddgRes = await axios.get(
+      `https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`,
+      { timeout: 6000 }
+    )
+    const topics = ddgRes.data?.RelatedTopics || []
+    const snippets = topics
+      .filter((t: any) => t.Text && t.FirstURL)
+      .slice(0, 6)
+      .map((t: any) => {
+        sources.push(t.FirstURL)
+        return `• ${t.Text}`
+      })
+    webSnippets = snippets.join('\n')
+    cotSteps.push(`duckduckgo_snippets:${snippets.length}`)
+  } catch {
+    console.warn('⚠️ DuckDuckGo fetch failed')
+    cotSteps.push('duckduckgo:failed')
+  }
+
+  // 2. Fetch Wikipedia context — try direct lookup, then search API fallback
+  try {
+    let wikiRes = await axios.get(
+      `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`,
+      { timeout: 5000, headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' } }
+    ).catch(() => null)
+
+    // If direct lookup failed, try search API
+    if (!wikiRes?.data?.extract) {
+      const bestTitle = await searchWikipediaTitle(query)
+      if (bestTitle) {
+        wikiRes = await axios.get(
+          `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(bestTitle)}`,
+          { timeout: 5000, headers: { 'User-Agent': 'G-One-VoiceAssistant/2.0 (Educational)' } }
+        ).catch(() => null)
+      }
+    }
+
+    if (wikiRes?.data?.extract) {
+      wikiContext = wikiRes.data.extract
+      wikiTitle = wikiRes.data.title || query
+      wikiUrl = wikiRes.data.content_urls?.desktop?.page || ''
+      if (wikiUrl) sources.push(wikiUrl)
+      cotSteps.push(`wikipedia_context:found:"${wikiTitle}"`)
+    }
+  } catch {
+    console.warn('⚠️ Wikipedia context fetch failed')
+    cotSteps.push('wikipedia_context:failed')
+  }
+
+  // 3. LLM synthesis — comprehensive explanation
+  const contextBlock = [
+    wikiContext ? `Wikipedia Overview ("${wikiTitle}"):\n${wikiContext}` : '',
+    webSnippets ? `Web Snippets:\n${webSnippets}` : ''
+  ].filter(Boolean).join('\n\n')
+
+  const prompt = `You are an expert research assistant. The user wants a DETAILED, COMPREHENSIVE explanation of the following topic.
+
+Topic: "${query}"
+
+Research Context:
+${contextBlock || 'No external context available — use your knowledge.'}
+
+Instructions:
+- Provide a thorough, well-structured explanation (at least 5-7 paragraphs)
+- Cover ALL of these sections with ## headings:
+  ## Definition
+  ## Background & History
+  ## Key Concepts
+  ## Real-World Applications
+  ## Current Relevance & Future
+  ## Summary
+- Use specific facts, dates, and names where possible
+- Do NOT use filler phrases like "Sure!", "Great question!", or "Certainly!"
+- Start directly with the content
+
+Detailed Explanation:`
+
+  try {
+    const aiResult = await generateWithProvider(prompt, {
+      maxTokens: 2000,
+      temperature: 0.4,
+      model: process.env.LLM_MODEL
+    })
+    const aiText = (aiResult as any)?.text || String(aiResult || '')
+    cotSteps.push(`llm_synthesis:success`)
+
+    let response = `## 🔍 Deep Search: ${query}\n\n`
+    response += aiText.trim()
+
+    if (wikiUrl) {
+      response += `\n\n---\n\n📚 **Wikipedia Reference:** [${wikiTitle}](${wikiUrl})`
+    }
+    if (sources.length > 0) {
+      response += `\n\n### 🌐 Sources\n`
+      const uniqueSources = [...new Set(sources)].slice(0, 6)
+      uniqueSources.forEach((s, i) => {
+        response += `${i + 1}. ${s}\n`
+      })
+    }
+
+    return { response, sources, cotSteps }
+  } catch (llmError) {
+    console.warn('⚠️ LLM synthesis failed, returning raw context')
+    cotSteps.push('llm_synthesis:failed')
+
+    let response = `## 🔍 Deep Search: ${query}\n\n`
+    if (wikiContext) response += `### Wikipedia Overview\n${wikiContext}\n\n`
+    if (webSnippets) response += `### Web Findings\n${webSnippets}\n`
+    if (wikiUrl) response += `\n📚 [Wikipedia: ${wikiTitle}](${wikiUrl})`
+
+    return { response, sources, cotSteps }
+  }
+}
+
 // ==================== MESSAGE PROCESSING ====================
 
 async function processEnhancedUserMessage(
@@ -1809,12 +2223,28 @@ async function processEnhancedUserMessage(
 function detectModeFromMessage(msg: string): string {
   const m = msg.toLowerCase()
 
+  if (/\b(email|draft|gmail|mail|send to)\b/.test(m)) {
+    return 'email'
+  }
+
   if (/\b(pain|hurt|sick|symptom|fever|cough|doctor|medical|health|diagnosis|medicine)\b/.test(m)) {
     return 'medical'
   }
 
   if (/\b(who is|what is|history of|born|died|biography|was|were|who was|what year|what year did)\b/.test(m)) {
     return 'wikipedia'
+  }
+
+  if (isShoppingIntent(msg)) {
+    return 'shopping'
+  }
+
+  if (isFinanceIntent(msg)) {
+    return 'finance'
+  }
+
+  if (isResearchPaperIntent(msg)) {
+    return 'research'
   }
 
   if (/\b(research|analyze|comprehensive|detailed|study|review|deep search|investigate|in-depth)\b/.test(m)) {
@@ -1841,6 +2271,11 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const manualMode = typeof requestBody.mode === 'string' ? requestBody.mode.toLowerCase() : undefined
     const userId = requestBody.userId || 'anonymous'
     const sessionId = requestBody.sessionId
+    const requestUserName = requestBody.userName
+    const requestUserEmail = requestBody.userEmail
+    const accessToken = requestBody.accessToken
+    // paperText: extracted content from uploaded PDF/TXT by the /api/upload-paper route
+    const paperText: string | undefined = requestBody.paperText
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json(createDefaultResponse({
@@ -1852,7 +2287,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       }), { status: 400 })
     }
 
-    if (message.length > CONFIG.MAX_MESSAGE_LENGTH) {
+    // Skip length check when paper text is provided (research uploads can be large)
+    const isResearchUpload = !!paperText && paperText.length > 0
+    if (!isResearchUpload && message.length > CONFIG.MAX_MESSAGE_LENGTH) {
       return NextResponse.json(createDefaultResponse({
         success: false,
         error: "Message too long",
@@ -1887,7 +2324,20 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     const session = getOrCreateSession(userId)
     const activeSessionId = sessionId || session.sessionId
 
-    const autoMode = detectModeFromMessage(message)
+    // Update context with provided user info
+    if (requestUserName) conversationContext.userName = requestUserName
+    if (requestUserEmail) conversationContext.userEmail = requestUserEmail
+
+    let autoMode = detectModeFromMessage(message)
+
+    // STICKY SESSION: If we have an active email draft, keep routing to email agent
+    // unless the user triggers another specific mode (like 'shopping' or 'medical')
+    // This ensures "yes", "proceed", "cancel" etc go to the email agent
+    if (conversationContext.emailDraft?.to && autoMode === 'enhanced') {
+      console.log('📎 Sticky session: forcing email mode due to active draft')
+      autoMode = 'email'
+    }
+
     const activeMode = manualMode || autoMode
 
     let response: ApiResponse
@@ -1903,6 +2353,156 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
         medicalResult.cotSteps
       )
       response.mode = 'medical'
+    } else if (activeMode === 'wikipedia') {
+      console.log('➡️ Routing to Wikipedia agent')
+      const wikiResult = await handleWikipediaQuery(message, userId)
+      response = createDefaultResponse({
+        success: true,
+        response: wikiResult.response,
+        source: 'wikipedia_agent',
+        metadata: {
+          responseTime: Date.now() - startTime,
+          sources: wikiResult.sources,
+          cotSteps: wikiResult.cotSteps,
+          provider: 'wikipedia'
+        },
+        suggestion: 'Ask me to deep search for a more detailed explanation!'
+      })
+      response.mode = 'wikipedia'
+    } else if (activeMode === 'deepsearch') {
+      console.log('➡️ Routing to DeepSearch agent')
+      const deepResult = await handleDeepSearchQuery(message, userId)
+      response = createDefaultResponse({
+        success: true,
+        response: deepResult.response,
+        source: 'deepsearch_agent',
+        metadata: {
+          responseTime: Date.now() - startTime,
+          sources: deepResult.sources,
+          cotSteps: deepResult.cotSteps,
+          provider: 'deepsearch+llm'
+        },
+        suggestion: 'Want to know more? Ask a follow-up question!'
+      })
+      response.mode = 'deepsearch'
+    } else if (activeMode === 'shopping') {
+      console.log('➡️ Routing to MarketMind shopping agent')
+      const shoppingResult = await handleShoppingQuery(message, userId)
+      recordShoppingQuery(shoppingResult.cached)
+      response = createDefaultResponse({
+        success: true,
+        response: shoppingResult.response,
+        source: 'shopping_agent',
+        metadata: {
+          responseTime: Date.now() - startTime,
+          sources: shoppingResult.sources,
+          cotSteps: shoppingResult.cotSteps,
+          provider: 'marketmind+serpapi',
+          cacheHit: shoppingResult.cached
+        },
+        suggestion: 'Ask me to compare products or search for something specific!'
+      })
+      response.mode = 'shopping'
+    } else if (activeMode === 'finance') {
+      console.log('➡️ Routing to FinanceGuard agent')
+      const financeResult = await handleFinanceQuery(message, userId)
+      recordFinanceQuery(financeResult.cotSteps.find(s => s.startsWith('finance_intent:'))?.split(':')[1] || 'general')
+      response = createDefaultResponse({
+        success: true,
+        response: financeResult.response,
+        source: 'finance_agent',
+        metadata: {
+          responseTime: Date.now() - startTime,
+          sources: financeResult.sources,
+          cotSteps: financeResult.cotSteps,
+          provider: 'financeguard',
+          cacheHit: financeResult.cached
+        },
+        suggestion: 'Ask me to calculate EMI, analyze risk, or suggest a portfolio!'
+      })
+      response.mode = 'finance'
+    } else if (activeMode === 'research') {
+      console.log('➡️ Routing to ScholarMind research agent')
+      // If uploaded paper text is provided, use it directly as the query
+      const researchInput = paperText && paperText.length > 100
+        ? paperText
+        : message
+      const researchResult = await handleResearchQuery(researchInput, userId)
+      const usedLLM = researchResult.sources.includes('llm_analysis')
+      recordScholarQuery(usedLLM)
+      response = createDefaultResponse({
+        success: true,
+        response: researchResult.response,
+        source: 'research_agent',
+        metadata: {
+          responseTime: Date.now() - startTime,
+          sources: researchResult.sources,
+          cotSteps: researchResult.cotSteps,
+          provider: 'scholarmind+llm',
+          cacheHit: researchResult.cached
+        },
+        suggestion: paperText ? 'Paper analyzed! Ask a follow-up question or upload another paper.' : 'Paste another paper or ask me to explain a specific term!'
+      })
+      response.mode = 'research'
+    } else if (activeMode === 'email') {
+      console.log('➡️ Routing to email agent')
+
+      const sentimentAnalysis = enhancedSentimentAnalysis(message)
+      conversationContext.userMood = sentimentAnalysis.sentiment
+
+      // CRITICAL FIX: Detect if this is a FRESH email session
+      // Greetings should ALWAYS clear context, even if a draft exists from old session
+      const isGreeting = /^(email agent\s+)?(hi|hello|hey|good (morning|afternoon|evening))\s*$/i.test(message.trim())
+      // Allow commands followed by other text (e.g., "email agent write to bob")
+      const isEmailCommand = /^(email agent|write (a |an )?email|compose email|send email)\b/i.test(message.trim())
+      const isFreshStart = isGreeting || isEmailCommand
+
+      if (isFreshStart) {
+        console.log('🆕 Fresh email session detected - clearing ALL email context')
+        conversationContext.emailDraft = { to: '', subject: '', body: '' }
+        // Also clear conversation history to prevent ghost recipients/topics
+        conversationContext.conversationHistory = []
+        conversationContext.conversationLength = 0
+        conversationContext.topicContinuity = []
+      }
+
+      // Map global context to AgentContext
+      const agentContext = {
+        conversationHistory: conversationContext.conversationHistory.map(h => ({
+          role: h.role === 'assistant' ? 'agent' : 'user' as 'agent' | 'user',
+          content: h.content
+        })),
+        emailDraft: conversationContext.emailDraft || { to: '', subject: '', body: '' },
+        userName: conversationContext.userName || 'User',
+        userEmail: conversationContext.userEmail || ''
+      }
+
+      // Fix: Pass correct arguments (message, context, accessToken) - removed userId
+      const emailResult = await handleEmailQuery(message, agentContext, accessToken)
+
+      // Fix: Correctly update draft state from updatedContext
+      if (emailResult.updatedContext && emailResult.updatedContext.emailDraft) {
+        conversationContext.emailDraft = emailResult.updatedContext.emailDraft
+      }
+
+      // Fix: Clear conversation history if agent requested a HARD RESET
+      if (emailResult.shouldResetContext) {
+        console.log('🧹 Clearing conversation history (Agent Reset)');
+        conversationContext.conversationHistory = [];
+        conversationContext.conversationLength = 0;
+        conversationContext.topicContinuity = [];
+      }
+
+      updateConversationHistory(message, sentimentAnalysis)
+
+      response = createEnhancedResponse(
+        emailResult.response,
+        'email_agent',
+        startTime,
+        undefined, // ragResults not fully used but passed if needed
+        emailResult.cotSteps
+      )
+      response.mode = 'email'
     } else {
       response = await processEnhancedUserMessage(message, userId)
       response.mode = activeMode

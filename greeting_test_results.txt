@@ -1,0 +1,135 @@
+﻿
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ                                                                    Γòæ[0m
+[35m[1mΓòæ   GREETING AGENT TOKEN SAVINGS ΓÇö REAL PROOF TEST                   Γòæ[0m
+[35m[1mΓòæ   Testing 10 greetings + 5 real questions against live API          Γòæ[0m
+[35m[1mΓòæ   19/2/2026, 3:22:17 pm                                  Γòæ[0m
+[35m[1mΓòæ                                                                    Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  PHASE 1: Sending 10 Greeting / Small-Talk Messages[0m
+[36m[1m  (These should be handled by Greeting Agent ΓÇö 0 LLM tokens)[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à[0m "hi" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m138ms[0m
+     [2mResponse: "Hello! I'm here to assist. What would you like to ..."[0m
+
+  [32mΓ£à[0m "hello" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m13ms[0m
+     [2mResponse: "Hi there! ≡ƒÿè What can I help you with?..."[0m
+
+  [32mΓ£à[0m "hey" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m10ms[0m
+     [2mResponse: "Hello! ≡ƒæï How can I assist you today?..."[0m
+
+  [32mΓ£à[0m "good morning" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m10ms[0m
+     [2mResponse: "Hey! Ready to help. What's on your mind?..."[0m
+
+  [32mΓ£à[0m "good afternoon" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m12ms[0m
+     [2mResponse: "Hi there! ≡ƒÿè What can I help you with?..."[0m
+
+  [32mΓ£à[0m "how are you" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m10ms[0m
+     [2mResponse: "All good here! What can I help you with today?..."[0m
+
+  [32mΓ£à[0m "thanks" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m13ms[0m
+     [2mResponse: "You're welcome! ≡ƒÿè Happy to help!..."[0m
+
+  [32mΓ£à[0m "thank you" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m11ms[0m
+     [2mResponse: "Glad I could help! ≡ƒæì..."[0m
+
+  [32mΓ£à[0m "bye" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m9ms[0m
+     [2mResponse: "Goodbye! ≡ƒæï Feel free to return anytime!..."[0m
+
+  [32mΓ£à[0m "goodbye" ΓåÆ Source: [1mgreeting_agent[0m | [32m0 tokens (saved!)[0m | [2m8ms[0m
+     [2mResponse: "Bye! Don't hesitate to ask if you need help again...."[0m
+
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  PHASE 2: Sending 5 Real Questions[0m
+[36m[1m  (These MUST go to the LLM ΓÇö real token consumption)[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  ≡ƒºá "AI question" ΓåÆ Provider: [1mwikipedia[0m | Model: [1munknown[0m
+     Tokens: ~[33m333[0m | Response: 1282 chars | [2m10460ms[0m
+
+  ≡ƒºá "Tech question" ΓåÆ Provider: [1mollama[0m | Model: [1mmistralai/Mistral-7B-Instruct-v0.2[0m
+     Tokens: ~[33m482[0m | Response: 1887 chars | [2m8595ms[0m
+
+  ≡ƒºá "Science question" ΓåÆ Provider: [1mollama[0m | Model: [1mmistralai/Mistral-7B-Instruct-v0.2[0m
+     Tokens: ~[33m625[0m | Response: 2466 chars | [2m10933ms[0m
+
+  ≡ƒºá "Tech question" ΓåÆ Provider: [1mwikipedia[0m | Model: [1munknown[0m
+     Tokens: ~[33m191[0m | Response: 735 chars | [2m549ms[0m
+
+  ≡ƒºá "Science question" ΓåÆ Provider: [1mollama[0m | Model: [1mmistralai/Mistral-7B-Instruct-v0.2[0m
+     Tokens: ~[33m699[0m | Response: 2762 chars | [2m11846ms[0m
+
+
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ                    TOKEN SAVINGS ANALYSIS                          Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+  [1mMESSAGES BREAKDOWN:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Total messages sent:              [1m15[0m
+  Greetings (handled by agent):     [32m[1m10[0m  (0 LLM tokens each)
+  Real questions (LLM required):    [33m[1m5[0m  (real token usage)
+
+  [1mTOKEN USAGE ΓÇö WITH GREETING AGENT (ACTUAL):[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Greeting tokens used:             [32m[1m0 tokens[0m  [32m(saved by agent!)[0m
+  Question tokens used:             [33m[1m2330 tokens[0m  (real LLM usage)
+  [1mTOTAL ACTUAL TOKENS:              [36m[1m2330 tokens[0m
+
+  [1mTOKEN USAGE ΓÇö WITHOUT GREETING AGENT (HYPOTHETICAL):[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  If greetings went to LLM:         [31m[1m1500 tokens[0m  (10 ├ù 150 tokens)
+  Question tokens (same):           [33m[1m2330 tokens[0m
+  [1mTOTAL WITHOUT AGENT:              [31m[1m3830 tokens[0m
+
+  [35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+  [35m[1mΓòæ                                                          Γòæ[0m
+  [35m[1mΓòæ   TOKENS SAVED:   [32m[1m1500 tokens[35m[1m                            Γòæ[0m
+  [35m[1mΓòæ   SAVINGS:        [32m[1m39.2% fewer tokens used[35m[1m                  Γòæ[0m
+  [35m[1mΓòæ                                                          Γòæ[0m
+  [35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+  [1mRESPONSE TIME COMPARISON:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  Avg greeting response time:       [32m[1m23ms[0m  (no LLM = instant)
+  Avg question response time:       [33m[1m8477ms[0m  (LLM processing)
+  Speed improvement for greetings:  [32m[1m369x faster[0m
+
+  [1mDETAILED PER-MESSAGE RESULTS:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  [2mMessage                   Agent              Tokens     Time       Status[0m
+  [2mΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+  "hi                    " greeting_agent     0          138ms      [32mΓ£à SAVED[0m
+  "hello                 " greeting_agent     0          13ms       [32mΓ£à SAVED[0m
+  "hey                   " greeting_agent     0          10ms       [32mΓ£à SAVED[0m
+  "good morning          " greeting_agent     0          10ms       [32mΓ£à SAVED[0m
+  "good afternoon        " greeting_agent     0          12ms       [32mΓ£à SAVED[0m
+  "how are you           " greeting_agent     0          10ms       [32mΓ£à SAVED[0m
+  "thanks                " greeting_agent     0          13ms       [32mΓ£à SAVED[0m
+  "thank you             " greeting_agent     0          11ms       [32mΓ£à SAVED[0m
+  "bye                   " greeting_agent     0          9ms        [32mΓ£à SAVED[0m
+  "goodbye               " greeting_agent     0          8ms        [32mΓ£à SAVED[0m
+  [2mΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+  "Explain what is machin" wikipedia_agent    [33m333       [0m 10460ms    ≡ƒºá LLM
+  "What are the benefits " enhanced_ai        [33m482       [0m 8595ms     ≡ƒºá LLM
+  "Tell me about the sola" enhanced_ai        [33m625       [0m 10933ms    ≡ƒºá LLM
+  "What is blockchain tec" wikipedia_agent    [33m191       [0m 549ms      ≡ƒºá LLM
+  "Explain the water cycl" enhanced_ai        [33m699       [0m 11846ms    ≡ƒºá LLM
+  [2mΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ[0m
+
+  [32m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+  [32m[1mΓòæ                       CONCLUSION                         Γòæ[0m
+  [32m[1mΓòáΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòú[0m
+  [32m[1mΓòæ                                                          Γòæ[0m
+  [32m[1mΓòæ  Γ£à ALL 10 greetings handled by Greeting Agent        Γòæ[0m
+  [32m[1mΓòæ  Γ£à ZERO LLM tokens consumed for greetings              Γòæ[0m
+  [32m[1mΓòæ  Γ£à 39.2% token savings proven with real API calls        Γòæ[0m
+  [32m[1mΓòæ  Γ£à Greeting response 369x faster than LLM response       Γòæ[0m
+  [32m[1mΓòæ  Γ£à No hallucination possible (hardcoded responses)       Γòæ[0m
+  [32m[1mΓòæ                                                          Γòæ[0m
+  [32m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+

@@ -1,0 +1,151 @@
+﻿
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ                                                               Γòæ[0m
+[35m[1mΓòæ     V64 G-ONE MULTI-AGENT SYSTEM ΓÇö JURY TEST SUITE            Γòæ[0m
+[35m[1mΓòæ     Real Tests Against Live API                               Γòæ[0m
+[35m[1mΓòæ     19/2/2026, 2:12:49 pm                           Γòæ[0m
+[35m[1mΓòæ                                                               Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 1: API Health Check[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö API is running
+       [2mVersion: 2.0.0[0m
+  [32mΓ£à PASS[0m ΓÇö API reports capabilities
+       [2mModes: ["systemIntegration","webSearch","conversationalAI","aiPowered","realTimeActions[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 2: Greeting Agent ΓÇö Token Utilization[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Simple greeting "hi": Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "Hey! Ready to help. What's on your mind?..." | Time: 12ms[0m
+  [32mΓ£à PASS[0m ΓÇö Simple greeting "hello": Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "Hello! ≡ƒæï How can I assist you today?..." | Time: 7ms[0m
+  [32mΓ£à PASS[0m ΓÇö Time-based greeting: Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "Hello! I'm here to assist. What would you like to know?..." | Time: 8ms[0m
+  [32mΓ£à PASS[0m ΓÇö Small talk: Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "I'm doing great, thanks for asking! How can I assist you?..." | Time: 8ms[0m
+  [32mΓ£à PASS[0m ΓÇö Gratitude: Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "My pleasure! Let me know if you need anything else...." | Time: 7ms[0m
+  [32mΓ£à PASS[0m ΓÇö Farewell: Routed to greeting_agent
+       [2mSource: "greeting_agent" | Response: "Take care! Come back if you need anything...." | Time: 7ms[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 3: Email Agent ΓÇö Real Email Drafting[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Email agent activated
+       [2mMode: "email" | Response asks for topic: "Got it ΓÇö emailing test@example.com. What is this email about?..." | Time: 8ms[0m
+  [32mΓ£à PASS[0m ΓÇö Email draft generated
+       [2mHas email content | Response: "I have the details:
+
+≡ƒôº To: test@example.com
+≡ƒô¥ Topic: It is about project deadline extension
+
+Shall..." | Time: 7ms[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 4: Wikipedia Agent ΓÇö Knowledge Retrieval[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Wikipedia agent returned factual content
+       [2mMode: "wikipedia" | Contains Einstein info | Time: 335ms[0m
+  [32mΓ£à PASS[0m ΓÇö Wikipedia agent includes source links
+       [2mSources found in response[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 5: DeepSearch Agent ΓÇö Comprehensive Research[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö DeepSearch returned comprehensive result
+       [2mMode: "deepsearch" | Response length: 4832 chars | Time: 6ms[0m
+  [32mΓ£à PASS[0m ΓÇö DeepSearch uses structured headings
+       [2mContains markdown sections[0m
+  [32mΓ£à PASS[0m ΓÇö DeepSearch includes external sources
+       [2mSources: 1[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 6: Medical Agent ΓÇö Health Queries[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Medical agent includes safety disclaimer
+       [2mMode: "medical" | Contains disclaimer | Time: 22498ms[0m
+  [32mΓ£à PASS[0m ΓÇö Medical agent addresses symptoms
+       [2mResponse references headache/fever[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 7: Main AI Engine ΓÇö CoT + RAG[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Main AI responded successfully
+       [2mSource: "enhanced_ai" | Provider: "ollama" | Model: "mistralai/Mistral-7B-Instruct-v0.2" | Time: 15167ms[0m
+  [32mΓ£à PASS[0m ΓÇö Chain of Thought (CoT) reasoning used
+       [2mCoT Steps: 10 steps[0m
+  [32mΓ£à PASS[0m ΓÇö RAG retrieval performed
+       [2mRAG results: 0[0m
+  [32mΓ£à PASS[0m ΓÇö Detailed response generated
+       [2mResponse length: 3028 chars[0m
+  [32mΓ£à PASS[0m ΓÇö Confidence score computed
+       [2mConfidence: 78.5%[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 8: Automatic Mode Detection[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Auto-detect: "hello..."
+       [2mDetected: "enhanced" | Source: "greeting_agent" | Time: 8ms[0m
+  [32mΓ£à PASS[0m ΓÇö Auto-detect: "send email to john@test.com..."
+       [2mDetected: "email" | Source: "email_agent" | Time: 11ms[0m
+  [32mΓ£à PASS[0m ΓÇö Auto-detect: "who is Nikola Tesla..."
+       [2mDetected: "wikipedia" | Source: "wikipedia_agent" | Time: 235ms[0m
+  [32mΓ£à PASS[0m ΓÇö Auto-detect: "I feel sick and have chest pain..."
+       [2mDetected: "medical" | Source: "medical_agent" | Time: 20279ms[0m
+
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+[36m[1m  TEST 9: Response Metadata Completeness[0m
+[36m[1mΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉ[0m
+
+  [32mΓ£à PASS[0m ΓÇö Metadata field "success" present
+       [2mValue exists[0m
+  [32mΓ£à PASS[0m ΓÇö Metadata field "response" present
+       [2mValue exists[0m
+  [32mΓ£à PASS[0m ΓÇö Metadata field "metadata" present
+       [2mValue exists[0m
+  [32mΓ£à PASS[0m ΓÇö Metadata field "metadata.responseTime" present
+       [2mValue exists[0m
+  [32mΓ£à PASS[0m ΓÇö Metadata field "suggestion" present
+       [2mValue exists[0m
+  [32mΓ£à PASS[0m ΓÇö Session tracking active
+       [2mSession: 3b25ad0f-0054-4035-a382-00a7d849cc81[0m
+  [32mΓ£à PASS[0m ΓÇö Message count tracked
+       [2mCount: 26[0m
+  [32mΓ£à PASS[0m ΓÇö Token usage tracked
+       [2mTokens: 2600[0m
+
+[35m[1mΓòöΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòù[0m
+[35m[1mΓòæ                    TEST RESULTS SUMMARY                       Γòæ[0m
+[35m[1mΓòÜΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓòÉΓò¥[0m
+
+  [1mTotal Tests:  34[0m
+  [32m[1mPassed:       34[0m
+  [32m[1mFailed:       0[0m
+  [1mPass Rate:    100.0%[0m
+  [1mTotal Time:   59.1s[0m
+
+  [36m[1mAGENT COVERAGE:[0m
+  ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+  [32mΓ£ô[0m Greeting Agent    ΓÇö Token savings (0 LLM tokens)
+  [32mΓ£ô[0m Email Agent       ΓÇö State machine + Ollama drafting
+  [32mΓ£ô[0m Wikipedia Agent   ΓÇö External knowledge retrieval
+  [32mΓ£ô[0m DeepSearch Agent  ΓÇö Multi-source research
+  [32mΓ£ô[0m Medical Agent     ΓÇö Specialized health queries
+  [32mΓ£ô[0m Main AI Engine    ΓÇö CoT + RAG reasoning
+  [32mΓ£ô[0m Mode Detection    ΓÇö Automatic agent routing
+  [32mΓ£ô[0m Metadata          ΓÇö Session + token tracking
+
+  [32m[1m≡ƒÅå ALL TESTS PASSED ΓÇö SYSTEM VERIFIED FOR JURY DEMO[0m
+

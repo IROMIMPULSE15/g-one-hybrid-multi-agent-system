@@ -20,6 +20,14 @@ const handler = NextAuth({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
       allowDangerousEmailAccountLinking: true,
+      authorization: {
+        params: {
+          scope: "openid email profile https://www.googleapis.com/auth/gmail.compose",
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      }
     }),
     CredentialsProvider({
       name: "Credentials",
@@ -76,6 +84,7 @@ const handler = NextAuth({
       }
       if (account?.provider === "google") {
         token.provider = "google";
+        token.accessToken = account.access_token; // Save access token
       }
       return token;
     },
@@ -85,6 +94,7 @@ const handler = NextAuth({
         session.user.plan = token.plan as string;
         session.user.chatsUsed = token.chatsUsed as number;
         session.user.chatsLimit = token.chatsLimit as number;
+        (session as any).accessToken = token.accessToken; // Expose access token
       }
       return session;
     },
